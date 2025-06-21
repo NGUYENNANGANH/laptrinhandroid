@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "9867066098",
+    "project_id": "truyenchu-2f4fe",
+    "storage_bucket": "truyenchu-2f4fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9867066098:android:74bd85aad9ca02ba212e6b",
+        "android_client_info": {
+          "package_name": "com.example.truyenchu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0aPQMvNC0a33T6p9yhDmqsLDg9lMEOCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

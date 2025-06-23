@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -17,9 +18,15 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.truyenchu.MainActivity;
 import com.example.truyenchu.R;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -35,18 +42,17 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class SignupActivity extends AppCompatActivity {
     private TextInputEditText editDisplayName, editEmail, editPassword;
-    private Button btnSignUp, btnGoogle, btnFacebook;
+    private Button btnSignUp, btnGoogle;
     private TextView textLoginLink;
     private String displayName, email, password;
     private FirebaseAuth mAuth;
 
     // used for SignIn by GG
-    private static final int REQ_ONE_TAP = 1;  // Request code for the One Tap UI
-    private boolean showOneTapUI = true;
     private GoogleSignInClient mGoogleSignInClient;
 
     // Sử dụng ActivityResultLauncher để xử lý kết quả trả về từ Google Sign-In
@@ -83,9 +89,10 @@ public class SignupActivity extends AppCompatActivity {
         editPassword = findViewById(R.id.editPassword);
         btnSignUp = findViewById(R.id.btnSignUp);
         btnGoogle = findViewById(R.id.btnGoogle);
-        btnFacebook = findViewById(R.id.btnFacebook);
         textLoginLink = findViewById(R.id.textLoginLink);
 
+
+        // sign-in with google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -98,6 +105,12 @@ public class SignupActivity extends AppCompatActivity {
 
         btnGoogle.setOnClickListener(view -> {
             signInWithGoogle();
+        });
+
+        textLoginLink.setOnClickListener(view -> {
+            Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+            startActivity(intent);
+            finishAffinity();
         });
     }
 
@@ -177,9 +190,7 @@ public class SignupActivity extends AppCompatActivity {
                         } else {
                             // Nếu là người dùng cũ, chỉ cần chuyển màn hình
                             Toast.makeText(this, "Đăng nhập bằng Google thành công!", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(SignupActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finishAffinity();
+                            goToMainActivity();
                         }
                     } else {
                         // Đăng nhập Firebase thất bại
@@ -188,4 +199,11 @@ public class SignupActivity extends AppCompatActivity {
                 });
     }
 
+    private void goToMainActivity() {
+        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+        // Xóa các activity trước đó khỏi back stack để người dùng không thể quay lại
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
 }

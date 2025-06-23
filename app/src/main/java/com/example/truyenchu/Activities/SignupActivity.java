@@ -134,14 +134,14 @@ public class SignupActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                        updateUserInfo(firebaseUser);
+                        updateUserInfo(firebaseUser, this.displayName, this.email, false);
                     } else {
                         Toast.makeText(this, "Đăng ký thất bại", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private void updateUserInfo(FirebaseUser firebaseUser) {
+    private void updateUserInfo(FirebaseUser firebaseUser, String displayName, String email, boolean isFromSocialLogin) {
         String uid = firebaseUser.getUid();
 
         HashMap<String, Object> userInfo = new HashMap<>();
@@ -155,11 +155,15 @@ public class SignupActivity extends AppCompatActivity {
         db.collection("users").document(uid).set(userInfo)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(SignupActivity.this, "Tạo tài khoản thành công!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
-                    intent.putExtra("email", email);
-                    intent.putExtra("password", password);
-                    startActivity(intent);
-                    finishAffinity();
+                    if (isFromSocialLogin) {
+                        goToMainActivity();
+                    } else {
+                        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+                        intent.putExtra("email", email);
+                        intent.putExtra("password", password);
+                        startActivity(intent);
+                        finishAffinity();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(SignupActivity.this, "Lưu thông tin thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -186,7 +190,9 @@ public class SignupActivity extends AppCompatActivity {
                         if (isNewUser) {
                             // Nếu là người dùng mới, lưu thông tin vào Firestore
                             Toast.makeText(this, "Đăng ký bằng Google thành công!", Toast.LENGTH_SHORT).show();
-                            updateUserInfo(user);
+                            String googleDisplayName = user.getDisplayName();
+                            String googleEmail = user.getEmail();
+                            updateUserInfo(user, googleDisplayName, googleEmail, true);
                         } else {
                             // Nếu là người dùng cũ, chỉ cần chuyển màn hình
                             Toast.makeText(this, "Đăng nhập bằng Google thành công!", Toast.LENGTH_SHORT).show();

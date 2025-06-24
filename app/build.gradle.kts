@@ -41,6 +41,8 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
     implementation(libs.play.services.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
@@ -56,6 +58,15 @@ dependencies {
 
     implementation ("com.google.firebase:firebase-auth")
     implementation ("com.google.firebase:firebase-firestore")
+    implementation ("com.google.android.gms:play-services-auth:21.0.0")
+
+    implementation ("com.facebook.android:facebook-login:latest.release")
+
+    // Glide (dùng để tải và hiển thị ảnh từ URL)
+    implementation(libs.glide)
+
+    implementation(libs.fragment.ktx) // fragment
+    implementation(libs.circleimageview)
 
     implementation ("com.google.android.gms:play-services-auth:21.0.0")
 

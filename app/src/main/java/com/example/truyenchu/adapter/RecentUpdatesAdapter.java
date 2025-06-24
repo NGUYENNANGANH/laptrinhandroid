@@ -21,6 +21,16 @@ public class RecentUpdatesAdapter extends RecyclerView.Adapter<RecentUpdatesAdap
     private final Context context;
     private final List<Truyen> truyenList;
 
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(Truyen truyen);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     public RecentUpdatesAdapter(Context context, List<Truyen> truyenList) {
         this.context = context;
         this.truyenList = truyenList;
@@ -48,12 +58,20 @@ public class RecentUpdatesAdapter extends RecyclerView.Adapter<RecentUpdatesAdap
                 .placeholder(R.drawable.hero_background)
                 .error(R.drawable.hero_background)
                 .into(holder.ivAnhBia);
+
+        //Bắt sự kiện click cho cả item
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(truyen);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return truyenList.size();
     }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAnhBia;

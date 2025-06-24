@@ -21,6 +21,17 @@ public class FeaturedTruyenAdapter extends RecyclerView.Adapter<FeaturedTruyenAd
     private final Context context;
     private final List<Truyen> truyenList;
 
+    private OnItemClickListener listener; // THÊM MỚI
+
+    // THÊM MỚI: Interface để xử lý click
+    public interface OnItemClickListener {
+        void onItemClick(Truyen truyen);
+    }
+
+    // THÊM MỚI: Method để fragment có thể set listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
     public FeaturedTruyenAdapter(Context context, List<Truyen> truyenList) {
         this.context = context;
         this.truyenList = truyenList;
@@ -48,6 +59,13 @@ public class FeaturedTruyenAdapter extends RecyclerView.Adapter<FeaturedTruyenAd
                 .placeholder(R.drawable.hero_background)
                 .error(R.drawable.hero_background)
                 .into(holder.ivAnhBia);
+
+        // Bắt sự kiện click cho cả item
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(truyen);
+            }
+        });
     }
 
     @Override

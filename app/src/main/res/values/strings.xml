@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">truyenchu</string>
+
+    <string name="already_have_account">Đã có tài khoản? <![CDATA[<b><a href="">Đăng nhập ngay</a></b>]]></string>
+    <string name="login_link_text">Đã có tài khoản? <![CDATA[<font color="#1877F2"><b>Đăng nhập ngay!</b></font>]]></string>
 </resources>
+

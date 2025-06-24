@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.play.services.auth)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -71,5 +72,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-auth:21.0.0")
 
     implementation ("com.facebook.android:facebook-login:latest.release")
+
+    implementation ("de.hdodenhof:circleimageview:3.1.0")
 
 }

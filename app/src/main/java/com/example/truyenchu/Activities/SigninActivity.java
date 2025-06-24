@@ -123,9 +123,7 @@ public class SigninActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         // Đăng nhập thành công
-                        Intent intent = new Intent(SigninActivity.this, ChangePasswordActivity.class);
-                        startActivity(intent);
-                        finishAffinity();
+                        goToMainActivity();
                     }
         }).addOnFailureListener(e -> Log.e(TAG, "Lỗi không thể đăng nhập ", e));
     }

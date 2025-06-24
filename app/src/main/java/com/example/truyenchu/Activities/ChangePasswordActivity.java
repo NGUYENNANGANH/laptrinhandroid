@@ -1,6 +1,7 @@
 package com.example.truyenchu.Activities;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -9,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.truyenchu.MainActivity;
 import com.example.truyenchu.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
@@ -118,7 +120,9 @@ public class ChangePasswordActivity extends AppCompatActivity {
                                         // Đổi mật khẩu thành công!
                                         Toast.makeText(this, "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
                                         // Đóng màn hình này và quay lại
-                                        finish();
+                                        Intent intent = new Intent(ChangePasswordActivity.this, MainActivity.class);
+                                        startActivity(intent);
+                                        finishAffinity();
                                     } else {
                                         // Đổi mật khẩu thất bại
                                         Toast.makeText(this, "Lỗi: " + updateTask.getException().getMessage(), Toast.LENGTH_SHORT).show();

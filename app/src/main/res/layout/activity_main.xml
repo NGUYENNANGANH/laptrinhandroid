@@ -6,7 +6,10 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- Khung chứa các Fragment -->
+    <!--
+      KHUNG CHỨA FRAGMENT - BẮT BUỘC PHẢI CÓ
+      ID của nó phải là "fragment_container" để khớp với code trong MainActivity.java
+    -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"

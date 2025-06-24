@@ -1,4 +1,4 @@
-package com.example.truyenchu.fragments;
+package com.example.truyenchu.fragment;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.navigation.Navigation;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -62,7 +63,7 @@ public class HomeFragment extends Fragment {
         // Trỏ đến node "truyen" theo data.json của bạn
         // Lưu ý: Nếu bạn đã cấu hình google-services.json đúng, bạn không cần truyền URL vào getInstance()
         databaseReference = FirebaseDatabase.getInstance().getReference("truyen");
-        Log.d(TAG, "Database reference: " + databaseReference.toString()); // Log để xem URL
+//        Log.d(TAG, "Database reference: " + databaseReference.toString()); // Log để xem URL
 
         // Thiết lập RecyclerView cho "Nội dung nổi bật"
         setupFeaturedRecyclerView();
@@ -80,6 +81,8 @@ public class HomeFragment extends Fragment {
         featuredTruyenList = new ArrayList<>();
         featuredAdapter = new FeaturedTruyenAdapter(getContext(), featuredTruyenList);
         featuredRecyclerView.setAdapter(featuredAdapter);
+        //Set listener cho adapter
+        featuredAdapter.setOnItemClickListener(this::onItemClick);
     }
 
     private void setupRecentUpdatesRecyclerView() {
@@ -87,6 +90,36 @@ public class HomeFragment extends Fragment {
         recentTruyenList = new ArrayList<>();
         recentAdapter = new RecentUpdatesAdapter(getContext(), recentTruyenList);
         recentUpdatesRecyclerView.setAdapter(recentAdapter);
+
+        //Set listener cho adapter này, cũng gọi đến hàm chung
+        recentAdapter.setOnItemClickListener(this::onItemClick);
+    }
+
+    //Hàm chung để xử lý sự kiện click từ cả hai adapter
+    private void onItemClick(Truyen truyen) {
+        if (truyen == null || truyen.getId() == null) return;
+
+        // 1. Tạo một đối tượng Bundle
+        Bundle bundle = new Bundle();
+
+        // 2. Đặt dữ liệu vào bundle với key đã định nghĩa ở ReadingFragment
+        bundle.putString(ReadingFragment.KEY_STORY_ID, truyen.getId());
+
+        // 3. Điều hướng bằng ID của action và đính kèm bundle
+        if (getView() != null) {
+            Navigation.findNavController(getView())
+                    .navigate(R.id.action_nav_home_to_readingFragment, bundle);
+        }
+        // Lấy ID của truyện được click
+//        String storyId = truyen.getId();
+//        // Tạo action điều hướng và truyền ID qua
+//        // Tên class và action được sinh ra từ ID trong nav_graph
+//        HomeFragmentDirections.ActionNavHomeToReadingFragment action =
+//                HomeFragmentDirections.actionNavHomeToReadingFragment(storyId);
+//        // Thực hiện điều hướng
+//        if (getView() != null) {
+//            Navigation.findNavController(getView()).navigate(action);
+//        }
     }
 
     private void loadFeaturedStories() {
@@ -149,4 +182,6 @@ public class HomeFragment extends Fragment {
             }
         });
     }
+
+
 }

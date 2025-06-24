@@ -1,4 +1,4 @@
-package com.example.truyenchu.fragments;
+package com.example.truyenchu.fragment;
 
 import android.os.Bundle;
 

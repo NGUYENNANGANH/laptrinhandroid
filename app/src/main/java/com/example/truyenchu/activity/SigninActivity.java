@@ -1,4 +1,4 @@
-package com.example.truyenchu.Activities;
+package com.example.truyenchu.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,47 +10,33 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.truyenchu.MainActivity;
 import com.example.truyenchu.R;
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.login.LoginManager;
-import com.facebook.login.LoginResult;
-import com.google.android.gms.auth.api.identity.Identity;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FacebookAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-
-import java.util.Arrays;
 import java.util.HashMap;
 
-public class SignupActivity extends AppCompatActivity {
-    private TextInputEditText editDisplayName, editEmail, editPassword;
-    private Button btnSignUp, btnGoogle;
-    private TextView textLoginLink;
-    private String displayName, email, password;
+public class SigninActivity extends AppCompatActivity {
+    private TextInputEditText editEmail, editPassword;
+    private TextView textForgotPassword, textSignupLink;
+    private Button btnSignIn, btnGoogle;
+    private String email, password;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private static final String TAG = "SigninActivity";
 
     // used for SignIn by GG
     private GoogleSignInClient mGoogleSignInClient;
@@ -74,100 +60,74 @@ public class SignupActivity extends AppCompatActivity {
                 }
             });
 
-    private FirebaseFirestore db;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_signup);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_signin);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        editDisplayName = findViewById(R.id.editDisplayName);
         editEmail = findViewById(R.id.editEmail);
         editPassword = findViewById(R.id.editPassword);
-        btnSignUp = findViewById(R.id.btnSignUp);
+        textForgotPassword = findViewById(R.id.textForgotPassword);
+        textSignupLink = findViewById(R.id.textSignupLink);
+        btnSignIn = findViewById(R.id.btnSignIn);
         btnGoogle = findViewById(R.id.btnGoogle);
-        textLoginLink = findViewById(R.id.textLoginLink);
 
+        Intent intent = getIntent();
+        if (intent != null && intent.getExtras() != null) {
+            email = intent.getStringExtra("email");
+            password = intent.getStringExtra("password");
+            if (email != null) {
+                editEmail.setText(email);
+            }
+            if (password != null) {
+                editPassword.setText(password);
+            }
+        }
 
-        // sign-in with google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        btnSignUp.setOnClickListener(view -> {
-            validateAndRegisterUser();
+        textSignupLink.setOnClickListener(view -> {
+            Intent intent1 = new Intent(SigninActivity.this, SignupActivity.class);
+            startActivity(intent1);
+            finishAffinity();
+        });
+
+        btnSignIn.setOnClickListener(view -> {
+            signInWithEmailAndPassword();
         });
 
         btnGoogle.setOnClickListener(view -> {
             signInWithGoogle();
         });
 
-        textLoginLink.setOnClickListener(view -> {
-            Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
-            startActivity(intent);
+        textForgotPassword.setOnClickListener(view -> {
+            Intent intent2 = new Intent(SigninActivity.this, ForgotPasswordActivity.class);
+            intent2.putExtra("email", email);
+            startActivity(intent2);
             finishAffinity();
         });
     }
 
-    // SignUp by Email, password
-    private void validateAndRegisterUser() {
-        displayName = editDisplayName.getText().toString();
-        email = editEmail.getText().toString();
-        password = editPassword.getText().toString();
-
-        if (displayName.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập tên hiển thị", Toast.LENGTH_SHORT).show();
-        }
-        if (email.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
-        }
-        if (password.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập password", Toast.LENGTH_SHORT).show();
-        }
-
-        mAuth.createUserWithEmailAndPassword(email, password)
+    private void signInWithEmailAndPassword() {
+        email = editEmail.getText().toString().trim();
+        password = editPassword.getText().toString().trim();
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                        updateUserInfo(firebaseUser, this.displayName, this.email, false);
-                    } else {
-                        Toast.makeText(this, "Đăng ký thất bại", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void updateUserInfo(FirebaseUser firebaseUser, String displayName, String email, boolean isFromSocialLogin) {
-        String uid = firebaseUser.getUid();
-
-        HashMap<String, Object> userInfo = new HashMap<>();
-        userInfo.put("uid", uid);
-        userInfo.put("email", email);
-        userInfo.put("displayName", displayName);
-        userInfo.put("profileImage", "");
-        userInfo.put("userType", "user");
-        userInfo.put("timestamp", System.currentTimeMillis());
-
-        db.collection("users").document(uid).set(userInfo)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(SignupActivity.this, "Tạo tài khoản thành công!", Toast.LENGTH_SHORT).show();
-                    if (isFromSocialLogin) {
-                        goToMainActivity();
-                    } else {
-                        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
-                        intent.putExtra("email", email);
-                        intent.putExtra("password", password);
+                        // Đăng nhập thành công
+                        Intent intent = new Intent(SigninActivity.this, ChangePasswordActivity.class);
                         startActivity(intent);
                         finishAffinity();
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(SignupActivity.this, "Lưu thông tin thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        }).addOnFailureListener(e -> Log.e(TAG, "Lỗi không thể đăng nhập ", e));
     }
 
     // SignIn by Google
@@ -192,7 +152,7 @@ public class SignupActivity extends AppCompatActivity {
                             Toast.makeText(this, "Đăng ký bằng Google thành công!", Toast.LENGTH_SHORT).show();
                             String googleDisplayName = user.getDisplayName();
                             String googleEmail = user.getEmail();
-                            updateUserInfo(user, googleDisplayName, googleEmail, true);
+                            updateUserInfo(user, googleDisplayName, googleEmail);
                         } else {
                             // Nếu là người dùng cũ, chỉ cần chuyển màn hình
                             Toast.makeText(this, "Đăng nhập bằng Google thành công!", Toast.LENGTH_SHORT).show();
@@ -206,10 +166,31 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void goToMainActivity() {
-        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+        Intent intent = new Intent(SigninActivity.this, MainActivity.class);
         // Xóa các activity trước đó khỏi back stack để người dùng không thể quay lại
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void updateUserInfo(FirebaseUser firebaseUser, String displayName, String email) {
+        String uid = firebaseUser.getUid();
+
+        HashMap<String, Object> userInfo = new HashMap<>();
+        userInfo.put("uid", uid);
+        userInfo.put("email", email);
+        userInfo.put("displayName", displayName);
+        userInfo.put("profileImage", "");
+        userInfo.put("userType", "user");
+        userInfo.put("timestamp", System.currentTimeMillis());
+
+        db.collection("users").document(uid).set(userInfo)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(SigninActivity.this, "Tạo tài khoản thành công!", Toast.LENGTH_SHORT).show();
+                    goToMainActivity();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(SigninActivity.this, "Lưu thông tin thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }

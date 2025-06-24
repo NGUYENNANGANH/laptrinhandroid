@@ -1,4 +1,4 @@
-package com.example.truyenchu.Activities;
+package com.example.truyenchu.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,36 +7,33 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.truyenchu.MainActivity;
 import com.example.truyenchu.R;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+
 
 import java.util.HashMap;
 
-public class SigninActivity extends AppCompatActivity {
-    private TextInputEditText editEmail, editPassword;
-    private TextView textForgotPassword, textSignupLink;
-    private Button btnSignIn, btnGoogle;
-    private String email, password;
+public class SignupActivity extends AppCompatActivity {
+    private TextInputEditText editDisplayName, editEmail, editPassword;
+    private Button btnSignUp, btnGoogle;
+    private TextView textLoginLink;
+    private String displayName, email, password;
     private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
-    private static final String TAG = "SigninActivity";
 
     // used for SignIn by GG
     private GoogleSignInClient mGoogleSignInClient;
@@ -60,74 +57,100 @@ public class SigninActivity extends AppCompatActivity {
                 }
             });
 
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_signin);
+        setContentView(R.layout.activity_signup);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        editDisplayName = findViewById(R.id.editDisplayName);
         editEmail = findViewById(R.id.editEmail);
         editPassword = findViewById(R.id.editPassword);
-        textForgotPassword = findViewById(R.id.textForgotPassword);
-        textSignupLink = findViewById(R.id.textSignupLink);
-        btnSignIn = findViewById(R.id.btnSignIn);
+        btnSignUp = findViewById(R.id.btnSignUp);
         btnGoogle = findViewById(R.id.btnGoogle);
+        textLoginLink = findViewById(R.id.textLoginLink);
 
-        Intent intent = getIntent();
-        if (intent != null && intent.getExtras() != null) {
-            email = intent.getStringExtra("email");
-            password = intent.getStringExtra("password");
-            if (email != null) {
-                editEmail.setText(email);
-            }
-            if (password != null) {
-                editPassword.setText(password);
-            }
-        }
 
+        // sign-in with google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        textSignupLink.setOnClickListener(view -> {
-            Intent intent1 = new Intent(SigninActivity.this, SignupActivity.class);
-            startActivity(intent1);
-            finishAffinity();
-        });
-
-        btnSignIn.setOnClickListener(view -> {
-            signInWithEmailAndPassword();
+        btnSignUp.setOnClickListener(view -> {
+            validateAndRegisterUser();
         });
 
         btnGoogle.setOnClickListener(view -> {
             signInWithGoogle();
         });
 
-        textForgotPassword.setOnClickListener(view -> {
-            Intent intent2 = new Intent(SigninActivity.this, ForgotPasswordActivity.class);
-            intent2.putExtra("email", email);
-            startActivity(intent2);
+        textLoginLink.setOnClickListener(view -> {
+            Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+            startActivity(intent);
             finishAffinity();
         });
     }
 
-    private void signInWithEmailAndPassword() {
-        email = editEmail.getText().toString().trim();
-        password = editPassword.getText().toString().trim();
-        mAuth.signInWithEmailAndPassword(email, password)
+    // SignUp by Email, password
+    private void validateAndRegisterUser() {
+        displayName = editDisplayName.getText().toString();
+        email = editEmail.getText().toString();
+        password = editPassword.getText().toString();
+
+        if (displayName.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập tên hiển thị", Toast.LENGTH_SHORT).show();
+        }
+        if (email.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập email", Toast.LENGTH_SHORT).show();
+        }
+        if (password.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập password", Toast.LENGTH_SHORT).show();
+        }
+
+        mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Đăng nhập thành công
-                        Intent intent = new Intent(SigninActivity.this, ChangePasswordActivity.class);
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        updateUserInfo(firebaseUser, this.displayName, this.email, false);
+                    } else {
+                        Toast.makeText(this, "Đăng ký thất bại", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void updateUserInfo(FirebaseUser firebaseUser, String displayName, String email, boolean isFromSocialLogin) {
+        String uid = firebaseUser.getUid();
+
+        HashMap<String, Object> userInfo = new HashMap<>();
+        userInfo.put("uid", uid);
+        userInfo.put("email", email);
+        userInfo.put("displayName", displayName);
+        userInfo.put("profileImage", "");
+        userInfo.put("userType", "user");
+        userInfo.put("timestamp", System.currentTimeMillis());
+
+        db.collection("users").document(uid).set(userInfo)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(SignupActivity.this, "Tạo tài khoản thành công!", Toast.LENGTH_SHORT).show();
+                    if (isFromSocialLogin) {
+                        goToMainActivity();
+                    } else {
+                        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
+                        intent.putExtra("email", email);
+                        intent.putExtra("password", password);
                         startActivity(intent);
                         finishAffinity();
                     }
-        }).addOnFailureListener(e -> Log.e(TAG, "Lỗi không thể đăng nhập ", e));
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(SignupActivity.this, "Lưu thông tin thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     // SignIn by Google
@@ -152,7 +175,7 @@ public class SigninActivity extends AppCompatActivity {
                             Toast.makeText(this, "Đăng ký bằng Google thành công!", Toast.LENGTH_SHORT).show();
                             String googleDisplayName = user.getDisplayName();
                             String googleEmail = user.getEmail();
-                            updateUserInfo(user, googleDisplayName, googleEmail);
+                            updateUserInfo(user, googleDisplayName, googleEmail, true);
                         } else {
                             // Nếu là người dùng cũ, chỉ cần chuyển màn hình
                             Toast.makeText(this, "Đăng nhập bằng Google thành công!", Toast.LENGTH_SHORT).show();
@@ -166,31 +189,10 @@ public class SigninActivity extends AppCompatActivity {
     }
 
     private void goToMainActivity() {
-        Intent intent = new Intent(SigninActivity.this, MainActivity.class);
+        Intent intent = new Intent(SignupActivity.this, SigninActivity.class);
         // Xóa các activity trước đó khỏi back stack để người dùng không thể quay lại
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-
-    private void updateUserInfo(FirebaseUser firebaseUser, String displayName, String email) {
-        String uid = firebaseUser.getUid();
-
-        HashMap<String, Object> userInfo = new HashMap<>();
-        userInfo.put("uid", uid);
-        userInfo.put("email", email);
-        userInfo.put("displayName", displayName);
-        userInfo.put("profileImage", "");
-        userInfo.put("userType", "user");
-        userInfo.put("timestamp", System.currentTimeMillis());
-
-        db.collection("users").document(uid).set(userInfo)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(SigninActivity.this, "Tạo tài khoản thành công!", Toast.LENGTH_SHORT).show();
-                    goToMainActivity();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(SigninActivity.this, "Lưu thông tin thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
     }
 }

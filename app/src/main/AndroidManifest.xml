@@ -14,15 +14,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Truyenchu"
         tools:targetApi="31">
-
-        <!-- Các Activity nằm trong thư mục activity -->
+        <activity
+            android:name=".activity.TaoBaiDangActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.activity_tao_bai_dang"
+            android:exported="false" /> <!-- Các Activity nằm trong thư mục activity -->
         <activity
             android:name=".activity.TimKiemActivity"
             android:exported="false" />
         <activity
             android:name=".activity.ChiTietTruyenActivity"
             android:exported="false" />
-
         <!--
          THAY ĐỔI QUAN TRỌNG:
          Khai báo MainActivity nằm ở thư mục gốc.
@@ -33,10 +36,10 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>

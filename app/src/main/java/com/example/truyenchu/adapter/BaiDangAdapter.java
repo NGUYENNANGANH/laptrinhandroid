@@ -55,16 +55,17 @@ public class BaiDangAdapter extends RecyclerView.Adapter<BaiDangAdapter.ViewHold
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        // View của người đăng
+        // Views for the user info
         ImageView ivUserAvatar;
         TextView tvUserName;
-        // View của nội dung
+        // Views for the post content
         TextView tvPostContent;
-        // View của khối thông tin truyện
+        ImageView ivPostImage; // The new ImageView for the user's uploaded image
+        // Views for the attached story info
         LinearLayout layoutStoryInfo;
         ImageView ivStoryCover;
         TextView tvStoryName, tvStoryAuthor, tvStoryGenre;
-        // View của thời gian
+        // View for the timestamp
         TextView tvTimestamp;
 
         public ViewHolder(@NonNull View itemView) {
@@ -72,6 +73,7 @@ public class BaiDangAdapter extends RecyclerView.Adapter<BaiDangAdapter.ViewHold
             ivUserAvatar = itemView.findViewById(R.id.iv_user_avatar_post);
             tvUserName = itemView.findViewById(R.id.tv_user_name_post);
             tvPostContent = itemView.findViewById(R.id.tv_post_content);
+            ivPostImage = itemView.findViewById(R.id.iv_post_image); // Find the new ImageView by its ID
             layoutStoryInfo = itemView.findViewById(R.id.layout_story_info_post);
             ivStoryCover = itemView.findViewById(R.id.iv_story_cover_post);
             tvStoryName = itemView.findViewById(R.id.tv_story_name_post);
@@ -81,12 +83,23 @@ public class BaiDangAdapter extends RecyclerView.Adapter<BaiDangAdapter.ViewHold
         }
 
         public void bind(final BaiDang baiDang, final OnStoryClickListener listener) {
-            // Hiển thị thông tin người đăng và nội dung
+            // Display user info and post content
             tvUserName.setText(baiDang.getUserName());
             tvPostContent.setText(baiDang.getPostContent());
             Glide.with(context).load(baiDang.getUserAvatar()).circleCrop().into(ivUserAvatar);
 
-            // Hiển thị khối thông tin truyện
+            // LOGIC TO DISPLAY THE POST IMAGE
+            // Check if the postImage URL exists and is not empty
+            if (baiDang.getPostImage() != null && !baiDang.getPostImage().isEmpty()) {
+                ivPostImage.setVisibility(View.VISIBLE); // Make the ImageView visible
+                Glide.with(context)
+                        .load(baiDang.getPostImage()) // Load the image from the URL
+                        .into(ivPostImage);
+            } else {
+                ivPostImage.setVisibility(View.GONE); // Hide the ImageView if there is no image
+            }
+
+            // Display attached story info
             if (baiDang.getStoryId() != null) {
                 layoutStoryInfo.setVisibility(View.VISIBLE);
                 tvStoryName.setText(baiDang.getStoryName());
@@ -94,13 +107,13 @@ public class BaiDangAdapter extends RecyclerView.Adapter<BaiDangAdapter.ViewHold
                 tvStoryGenre.setText("Thể loại: " + baiDang.getStoryGenreTags());
                 Glide.with(context).load(baiDang.getStoryCoverImage()).into(ivStoryCover);
 
-                // Gán sự kiện click cho cả khối
+                // Set click listener for the whole block
                 layoutStoryInfo.setOnClickListener(v -> listener.onStoryClick(baiDang.getStoryId()));
             } else {
                 layoutStoryInfo.setVisibility(View.GONE);
             }
 
-            // Định dạng và hiển thị thời gian
+            // Format and display the timestamp
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy", Locale.getDefault());
             String formattedDate = sdf.format(new Date(baiDang.getTimestamp()));
             tvTimestamp.setText(formattedDate);

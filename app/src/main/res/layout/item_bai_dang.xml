@@ -12,20 +12,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <!-- 1. Thông tin người đăng -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
 
             <ImageView
                 android:id="@+id/iv_user_avatar_post"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                android:contentDescription="Ảnh đại diện người đăng"/>
 
             <TextView
                 android:id="@+id/tv_user_name_post"
@@ -42,15 +45,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:paddingHorizontal="12dp"
             android:text="Nội dung bài đăng ở đây..."
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
-        <!-- 3. Khối thông tin truyện được đính kèm -->
+        <!-- 3. THÊM MỚI: ImageView cho ảnh người dùng đăng -->
+        <ImageView
+            android:id="@+id/iv_post_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:adjustViewBounds="true"
+            android:maxHeight="350dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="Ảnh của bài đăng" /> <!-- Mặc định sẽ ẩn đi -->
+
+
+        <!-- 4. Khối thông tin truyện được đính kèm -->
         <LinearLayout
             android:id="@+id/layout_story_info_post"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/story_item_background"
             android:orientation="horizontal"
@@ -60,7 +78,8 @@
                 android:id="@+id/iv_story_cover_post"
                 android:layout_width="70dp"
                 android:layout_height="90dp"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                android:contentDescription="Ảnh bìa truyện"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -92,12 +111,13 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 4. Thời gian đăng bài -->
+        <!-- 5. Thời gian đăng bài -->
         <TextView
             android:id="@+id/tv_post_timestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:paddingHorizontal="12dp"
             android:text="11:21 24/06/2025"
             android:textSize="12sp" />
 

@@ -55,4 +55,7 @@ dependencies {
 
     implementation ("com.google.firebase:firebase-firestore")
 
+    implementation(libs.fragment.ktx) // fragment
+    implementation(libs.circleimageview)
+
 }

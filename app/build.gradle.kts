@@ -48,14 +48,17 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation(platform(libs.firebase.bom))
 
     // When using the BoM, don't specify versions in Firebase dependencies
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.analytics)
 
-    implementation ("com.google.android.material:material:1.12.0")
+    implementation (libs.material)
 
-    implementation ("com.google.firebase:firebase-firestore")
+    implementation (libs.firebase.firestore)
+
+    // Glide (dùng để tải và hiển thị ảnh từ URL)
+    implementation(libs.glide)
 
     implementation(libs.fragment.ktx) // fragment
     implementation(libs.circleimageview)

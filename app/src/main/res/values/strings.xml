@@ -20,6 +20,9 @@
     <string name="featured_content">Nội dung nổi bật</string>
     <string name="recent_updates">Cập nhật gần đây</string>
     <string name="see_all">Xem tất cả</string>
+    <string name="book_cover">Sách</string>
+
+
 
     <!-- Profile Screen -->
     <string name="user_name">Người dùng</string>

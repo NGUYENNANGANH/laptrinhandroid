@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    tools:context=".activity.PhanLoaiActivity">
+    tools:context=".fragment.CategoryFragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -31,10 +31,11 @@
                 android:drawablePadding="8dp"
                 android:focusable="false"
                 android:hint="Search for stories, authors…"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:autofillHints="name" />
         </LinearLayout>
 
-        <!-- THAY ĐỔI: Thêm contentDescription để khắc phục cảnh báo -->
+        <!-- Thanh chọn thể loại -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout_the_loai"
             android:layout_width="match_parent"
@@ -80,6 +81,7 @@
                     android:textColor="@color/purple_500" />
             </RelativeLayout>
 
+            <!-- Danh sách truyện -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_truyen"
                 android:layout_width="match_parent"
@@ -89,11 +91,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        app:menu="@menu/bottom_nav_menu" />
+    <!-- Lưu ý: BottomNavigationView và FAB sẽ nằm trong activity_main.xml -->
+    <!-- vì chúng thuộc về Activity chính, không phải của riêng Fragment này -->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

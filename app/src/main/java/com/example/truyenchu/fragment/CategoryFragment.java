@@ -1,16 +1,23 @@
-package com.example.truyenchu.activity;
+package com.example.truyenchu.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.truyenchu.R;
+import com.example.truyenchu.activity.ChiTietTruyenActivity;
+import com.example.truyenchu.activity.TimKiemActivity;
 import com.example.truyenchu.adapter.TruyenTrendingAdapter;
 import com.example.truyenchu.model.TheLoai;
 import com.example.truyenchu.model.Truyen;
@@ -20,62 +27,74 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class PhanLoaiActivity extends AppCompatActivity {
+// Đổi tên class thành CategoryFragment
+public class CategoryFragment extends Fragment {
 
-    private static final String TAG = "PhanLoaiActivity";
+    private static final String TAG = "CategoryFragment"; // Đổi TAG cho dễ debug
 
     private RecyclerView rvTruyen;
     private TruyenTrendingAdapter truyenTrendingAdapter;
-    private List<Truyen> displayedTruyenList = new ArrayList<>(); // Danh sách hiển thị
-    private List<Truyen> allTruyenList = new ArrayList<>(); // Danh sách chứa tất cả truyện
+    private List<Truyen> displayedTruyenList = new ArrayList<>();
+    private List<Truyen> allTruyenList = new ArrayList<>();
     private EditText etTimKiem;
     private DatabaseReference database;
     private TabLayout tabLayout;
     private TextView tvListTitle;
+    private View view; // View gốc của Fragment
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Tham chiếu đến layout đã được đổi tên: fragment_category.xml
+        view = inflater.inflate(R.layout.fragment_category, container, false);
+        return view;
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_phan_loai);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         database = FirebaseDatabase.getInstance().getReference();
 
-        etTimKiem = findViewById(R.id.et_tim_kiem);
-        tabLayout = findViewById(R.id.tab_layout_the_loai);
-        tvListTitle = findViewById(R.id.tv_list_title);
+        // Dùng view để tìm ID
+        etTimKiem = view.findViewById(R.id.et_tim_kiem);
+        tabLayout = view.findViewById(R.id.tab_layout_the_loai);
+        tvListTitle = view.findViewById(R.id.tv_list_title);
 
-        etTimKiem.setOnClickListener(v -> startActivity(new Intent(PhanLoaiActivity.this, TimKiemActivity.class)));
+        etTimKiem.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), TimKiemActivity.class);
+            startActivity(intent);
+        });
 
         setupRecyclerView();
-        loadAllTruyenData(); // Tải tất cả truyện trước
+        loadAllTruyenData();
         setupTabs();
     }
 
     private void setupRecyclerView() {
-        rvTruyen = findViewById(R.id.rv_truyen);
-        rvTruyen.setLayoutManager(new LinearLayoutManager(this));
+        rvTruyen = view.findViewById(R.id.rv_truyen);
+        rvTruyen.setLayoutManager(new LinearLayoutManager(getContext()));
         rvTruyen.setNestedScrollingEnabled(false);
-        truyenTrendingAdapter = new TruyenTrendingAdapter(this, displayedTruyenList, truyen -> {
-            Intent intent = new Intent(PhanLoaiActivity.this, ChiTietTruyenActivity.class);
+        truyenTrendingAdapter = new TruyenTrendingAdapter(getContext(), displayedTruyenList, truyen -> {
+            Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
             intent.putExtra("TRUYEN_ID", truyen.getId());
             startActivity(intent);
         });
         rvTruyen.setAdapter(truyenTrendingAdapter);
     }
 
+    // Các hàm setupTabs, loadAllTruyenData, filterAndDisplayTruyen giữ nguyên logic
     private void setupTabs() {
         database.child("the_loai").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Thêm tab "Tất cả" vào đầu tiên
+                if (snapshot.exists() && isAdded()) {
                     tabLayout.addTab(tabLayout.newTab().setText("Tất cả"));
-
                     for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                         TheLoai theLoai = dataSnapshot.getValue(TheLoai.class);
                         if (theLoai != null) {
@@ -93,13 +112,12 @@ public class PhanLoaiActivity extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                String selectedCategory = tab.getText().toString();
-                filterAndDisplayTruyen(selectedCategory);
+                if (tab.getText() != null) {
+                    filterAndDisplayTruyen(tab.getText().toString());
+                }
             }
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
@@ -107,16 +125,17 @@ public class PhanLoaiActivity extends AppCompatActivity {
         database.child("truyen").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                allTruyenList.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Truyen truyen = snapshot.getValue(Truyen.class);
-                    if (truyen != null) {
-                        truyen.setId(snapshot.getKey());
-                        allTruyenList.add(truyen);
+                if (isAdded()) {
+                    allTruyenList.clear();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        Truyen truyen = snapshot.getValue(Truyen.class);
+                        if (truyen != null) {
+                            truyen.setId(snapshot.getKey());
+                            allTruyenList.add(truyen);
+                        }
                     }
+                    filterAndDisplayTruyen("Tất cả");
                 }
-                // Sau khi tải xong, hiển thị danh sách "Tất cả" ban đầu
-                filterAndDisplayTruyen("Tất cả");
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "Lỗi tải truyện: " + error.getMessage());
@@ -127,31 +146,25 @@ public class PhanLoaiActivity extends AppCompatActivity {
     private void filterAndDisplayTruyen(String category) {
         displayedTruyenList.clear();
         List<Truyen> filteredList = new ArrayList<>();
-
         if (category.equalsIgnoreCase("Tất cả")) {
             tvListTitle.setText("Top Trending This Week");
-            // Sắp xếp theo đánh giá để lấy top trending
             Collections.sort(allTruyenList, (t1, t2) -> Double.compare(t2.getDanhGia(), t1.getDanhGia()));
             filteredList.addAll(allTruyenList);
         } else {
             tvListTitle.setText("Top Trending " + category);
             for (Truyen truyen : allTruyenList) {
-                // Kiểm tra xem tag thể loại của truyện có chứa tên thể loại được chọn không
                 if (truyen.getTheLoaiTags() != null && truyen.getTheLoaiTags().toLowerCase().contains(category.toLowerCase())) {
                     filteredList.add(truyen);
                 }
             }
-            // Sắp xếp danh sách đã lọc theo đánh giá
             Collections.sort(filteredList, (t1, t2) -> Double.compare(t2.getDanhGia(), t1.getDanhGia()));
         }
 
-        // Lấy 5 truyện đầu tiên sau khi đã lọc và sắp xếp
         int limit = Math.min(filteredList.size(), 5);
         for (int i = 0; i < limit; i++) {
             displayedTruyenList.add(filteredList.get(i));
         }
 
         truyenTrendingAdapter.notifyDataSetChanged();
-        Log.d(TAG, "Đã lọc cho thể loại '" + category + "', hiển thị " + displayedTruyenList.size() + " truyện.");
     }
 }

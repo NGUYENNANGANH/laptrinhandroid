@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import com.example.truyenchu.R;
 import com.example.truyenchu.model.Truyen;
 import com.google.firebase.database.DataSnapshot;
@@ -56,13 +57,15 @@ public class ReadingFragment extends Fragment {
         drawerLayout = view.findViewById(R.id.drawer_layout);
         tvStoryContent = view.findViewById(R.id.tv_story_content);
         toolbar = view.findViewById(R.id.toolbar);
-        tvChapterTitle = view.findViewById(R.id.tv_chapter_title);
+//        tvChapterTitle = view.findViewById(R.id.tv_chapter_title);
 
+        // Gán sự kiện cho các nút
+        setupEventListeners(view);
 
-        // Bắt sự kiện cho các nút
-        view.findViewById(R.id.btn_chapters).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
-        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
-        // TODO: Thêm sự kiện cho các nút khác như settings, back...
+//        // Bắt sự kiện cho các nút
+//        view.findViewById(R.id.btn_chapters).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+//        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+//        // TODO: Thêm sự kiện cho các nút khác như settings, back...
 
         // Nếu có storyId, bắt đầu tải dữ liệu
         if (storyId != null) {
@@ -71,6 +74,33 @@ public class ReadingFragment extends Fragment {
         }
     }
 
+    private void setupEventListeners(View view) {
+        // Nút quay lại trên toolbar
+        toolbar.setNavigationOnClickListener(v -> {
+            // Quay lại màn hình trước đó
+            Navigation.findNavController(v).navigateUp();
+        });
+
+        // Nút báo lỗi trên menu của toolbar
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_report_error) {
+                // Hiển thị dialog báo lỗi
+                new ReportErrorDialogFragment().show(getParentFragmentManager(), "ReportErrorDialog");
+                return true;
+            }
+            return false;
+        });
+
+        // Nút mở danh sách chương
+        view.findViewById(R.id.btn_chapters).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+
+        // Nút mở cài đặt
+        view.findViewById(R.id.btn_settings).setOnClickListener(v -> {
+            new SettingsBottomSheetFragment().show(getParentFragmentManager(), "SettingsBottomSheet");
+        });
+    }
+
+
     private void loadStoryData(String storyId) {
         DatabaseReference storyRef = FirebaseDatabase.getInstance().getReference("truyen").child(storyId);
         storyRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -78,11 +108,13 @@ public class ReadingFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Truyen truyen = snapshot.getValue(Truyen.class);
                 if (truyen != null) {
-                    // Hiển thị tên truyện lên Toolbar
-                    // Bạn nên tạo một TextView riêng cho tên truyện thay vì dùng title của Toolbar
-                    // để không bị giới hạn về độ dài và style.
-                    // Ở đây, ta sẽ hiển thị tạm lên TextView có sẵn
-                    tvChapterTitle.setText(truyen.getTen());
+                    // TODO: Lấy tên chương và tên truyện thật
+                    String chapterName = "Chương 4"; // Tạm thời
+                    String storyName = truyen.getTen();
+
+                    // Hiển thị lên Toolbar
+                    toolbar.setTitle(chapterName);
+                    toolbar.setSubtitle(storyName);
 
                     // TODO: Hiển thị nội dung truyện (của chương đầu tiên)
                     // Bạn cần một truy vấn khác để lấy nội dung chương

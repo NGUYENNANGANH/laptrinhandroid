@@ -26,7 +26,7 @@
                 android:background="@color/white"
                 android:gravity="center_vertical"
                 android:elevation="2dp">
-                <!-- ... Nội dung Header ... -->
+
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -46,14 +46,26 @@
                     android:padding="4dp"
                     android:contentDescription="@string/notifications" />
 
-                <de.hdodenhof.circleimageview.CircleImageView
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <Button
+                        android:id="@+id/btn_login_home"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Đăng nhập"
+                        android:textSize="14sp"
+                        android:visibility="visible" />
+                    <de.hdodenhof.circleimageview.CircleImageView
                     android:contentDescription="Ảnh đại diện"
                     android:id="@+id/profile_image"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:src="@drawable/default_avatar"
                     app:civ_border_width="2dp"
-                    app:civ_border_color="@color/primary_blue" />
+                    app:civ_border_color="@color/primary_blue"
+                    android:visibility="gone" /> </FrameLayout>
             </LinearLayout>
 
             <!-- Hero Section (Slider) -->

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,16 +15,22 @@
         android:theme="@style/Theme.Truyenchu"
         tools:targetApi="31">
         <activity
-            android:name=".Activities.ChangePasswordActivity"
+            android:name=".activity.DonateActivity"
             android:exported="false" />
         <activity
-            android:name=".Activities.ForgotPasswordActivity"
+            android:name=".activity.EditProfileActivity"
             android:exported="false" />
         <activity
-            android:name=".Activities.SigninActivity"
+            android:name=".activity.ChangePasswordActivity"
             android:exported="false" />
         <activity
-            android:name=".Activities.SignupActivity"
+            android:name=".activity.ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SigninActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SignupActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
@@ -34,5 +42,5 @@
             </intent-filter>
         </activity>
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>

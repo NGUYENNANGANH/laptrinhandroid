@@ -34,37 +34,42 @@ android {
 }
 
 dependencies {
-    // --- CÁC THƯ VIỆN HIỆN CÓ CỦA BẠN (GIỮ NGUYÊN) ---
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    // Dòng này đã bao gồm firestore rồi, nhưng hãy dùng libs.google.firebase.firestore bên dưới cho thống nhất
-    implementation(libs.firebase.database) // Nếu bạn dùng Realtime Database thì giữ lại
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
-    implementation(libs.glide)
-    implementation(libs.fragment.ktx)
-    implementation(libs.circleimageview)
+    implementation(libs.play.services.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // --- PHẦN DỌN DẸP VÀ CHỈNH SỬA ---
-
-    // 1. Import Firebase BoM (Bill of Materials) - Bạn đã làm đúng.
-    // Dòng này sẽ quản lý phiên bản của tất cả thư viện Firebase khác.
+    // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
 
-    // 2. Sử dụng alias từ `libs` để thêm thư viện.
-    // Xóa các dòng khai báo bằng chuỗi "com.google.firebase:..." bị lặp lại.
-    implementation(libs.firebase.auth)
-    implementation(libs.google.firebase.firestore) // <- Đảm bảo dòng này có để sử dụng Firestore
-    implementation(libs.play.services.auth)       // <- Đảm bảo dòng này có để sử dụng Google Sign-In
-
-    // (Tùy chọn) Thêm Firebase Analytics
+    // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
 
-    // Các thư viện khác
-    implementation("com.facebook.android:facebook-login:latest.release")
+    implementation ("com.google.android.material:material:1.12.0")
+
+    implementation ("com.google.firebase:firebase-auth")
+    implementation ("com.google.firebase:firebase-firestore")
+    implementation ("com.google.android.gms:play-services-auth:21.0.0")
+
+    implementation ("com.facebook.android:facebook-login:latest.release")
+
+    // Glide (dùng để tải và hiển thị ảnh từ URL)
+    implementation(libs.glide)
+
+    implementation(libs.fragment.ktx) // fragment
+    implementation(libs.circleimageview)
+
+    implementation ("com.google.android.gms:play-services-auth:21.0.0")
+
+    implementation ("com.facebook.android:facebook-login:latest.release")
+
 }

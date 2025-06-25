@@ -3,6 +3,7 @@ package com.example.truyenchu.model;
 public class Chuong {
     private String id;
     private String ten;
+    private String noiDung;
     private String ngayDang;
 
     public Chuong() {
@@ -16,4 +17,12 @@ public class Chuong {
     public void setTen(String ten) { this.ten = ten; }
     public String getNgayDang() { return ngayDang; }
     public void setNgayDang(String ngayDang) { this.ngayDang = ngayDang; }
+
+    public void setNoiDung(String noiDung) {
+        this.noiDung = noiDung;
+    }
+
+    public String getNoiDung() {
+        return noiDung;
+    }
 }

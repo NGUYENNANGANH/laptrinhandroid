@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-// THAY ĐỔI: Đổi tên class
 public class CommunityFragment extends Fragment {
 
     private RecyclerView rvBaiDang;
@@ -39,7 +38,7 @@ public class CommunityFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // THAY ĐỔI: Sử dụng layout đã đổi tên
+        // Đảm bảo nó đang sử dụng đúng file layout đã được đổi tên
         return inflater.inflate(R.layout.fragment_community, container, false);
     }
 
@@ -60,6 +59,7 @@ public class CommunityFragment extends Fragment {
 
     private void setupRecyclerView() {
         rvBaiDang.setLayoutManager(new LinearLayoutManager(getContext()));
+        // Khởi tạo adapter với listener để xử lý sự kiện click vào truyện được đính kèm
         adapter = new BaiDangAdapter(getContext(), baiDangList, storyId -> {
             Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
             intent.putExtra("TRUYEN_ID", storyId);
@@ -76,14 +76,19 @@ public class CommunityFragment extends Fragment {
                 baiDangList.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     BaiDang baiDang = dataSnapshot.getValue(BaiDang.class);
-                    baiDangList.add(baiDang);
+                    if (baiDang != null) {
+                        baiDangList.add(baiDang);
+                    }
                 }
+                // Sắp xếp để bài mới nhất lên đầu
                 Collections.sort(baiDangList, (post1, post2) -> Long.compare(post2.getTimestamp(), post1.getTimestamp()));
                 adapter.notifyDataSetChanged();
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Xử lý lỗi nếu cần
+            }
         });
     }
 }

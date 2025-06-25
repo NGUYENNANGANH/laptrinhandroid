@@ -8,7 +8,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.truyenchu.R;
 import com.example.truyenchu.fragment.CategoryFragment;
-import com.example.truyenchu.fragment.CommunityFragment; // THAY ĐỔI: Import CommunityFragment
+import com.example.truyenchu.fragment.CommunityFragment; // Đảm bảo import đúng tên mới
 import com.example.truyenchu.fragment.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(navListener);
 
-        // Đặt HomeFragment làm màn hình mặc định khi khởi động
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
             loadFragment(new HomeFragment());
@@ -39,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.nav_category) {
                     selectedFragment = new CategoryFragment();
                 } else if (itemId == R.id.nav_community) {
-                    // THAY ĐỔI: Gọi đến CommunityFragment
+                    // THAY ĐỔI CỐT LÕI: Gọi đến CommunityFragment
                     selectedFragment = new CommunityFragment();
                 }
 

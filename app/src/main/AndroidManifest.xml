@@ -17,9 +17,7 @@
         <activity
             android:name=".activity.TaoBaiDangActivity"
             android:exported="false" />
-        <activity
-            android:name=".activity.activity_tao_bai_dang"
-            android:exported="false" /> <!-- Các Activity nằm trong thư mục activity -->
+
         <activity
             android:name=".activity.TimKiemActivity"
             android:exported="false" />

@@ -68,29 +68,24 @@
                     android:layout_height="200dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp">
-
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
-
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:src="@drawable/hero_background"
                             android:scaleType="centerCrop" />
-
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:background="@drawable/gradient_overlay" />
-
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:layout_gravity="bottom|start"
                             android:layout_margin="20dp">
-
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -99,7 +94,6 @@
                                 android:textSize="22sp"
                                 android:textStyle="bold"
                                 android:layout_marginBottom="12dp" />
-
                             <Button
                                 android:id="@+id/btn_read_now"
                                 android:layout_width="wrap_content"
@@ -140,6 +134,7 @@
 
             <!-- Search Section -->
             <LinearLayout
+                android:id="@+id/search_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="16dp"
@@ -155,7 +150,8 @@
                     android:focusable="false"
                     android:hint="@string/search_hint"
                     android:padding="12dp"
-                    android:textColorHint="@color/text_hint" />
+                    android:textColorHint="@color/text_hint"
+                    android:drawableTint="@color/text_hint" />
             </LinearLayout>
 
 
@@ -191,7 +187,6 @@
                         android:padding="8dp" />
                 </LinearLayout>
 
-                <!-- THAY ĐỔI: Đã thêm lại RecyclerView này -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/featured_recycler_view"
                     android:layout_width="match_parent"
@@ -232,7 +227,6 @@
                         android:padding="8dp" />
                 </LinearLayout>
 
-                <!-- THAY ĐỔI: Đã thêm lại RecyclerView này -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recent_updates_recycler_view"
                     android:layout_width="match_parent"

@@ -1,4 +1,4 @@
-package com.example.truyenchu.Activities;
+package com.example.truyenchu.activity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;

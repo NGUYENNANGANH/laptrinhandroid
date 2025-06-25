@@ -1,4 +1,4 @@
-package com.example.truyenchu.Activities;
+package com.example.truyenchu.activity;
 
 import android.content.Intent;
 import android.os.Bundle;

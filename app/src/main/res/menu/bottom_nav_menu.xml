@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home"
+        android:title="Trang chủ"
+        android:icon="@drawable/ic_home"/> <!-- Sử dụng icon mới -->
 
-    <item
-        android:id="@+id/nav_home"
-        android:icon="@drawable/ic_home"
-        android:title="@string/home" />
+    <item android:id="@+id/nav_category"
+        android:title="Phân loại"
+        android:icon="@drawable/ic_category"/> <!-- Sử dụng icon mới -->
 
-    <item
-        android:id="@+id/nav_categories"
-        android:icon="@drawable/ic_category"
-        android:title="@string/categories" />
+    <item android:id="@+id/nav_community"
+        android:title="Cộng đồng"
+        android:icon="@drawable/ic_community"/> <!-- Sử dụng icon mới -->
 
-    <item
-        android:id="@+id/nav_community"
-        android:icon="@drawable/ic_community"
-        android:title="@string/community" />
+    <item android:id="@+id/nav_library"
+        android:title="Tủ sách"
+        android:icon="@drawable/ic_library"/> <!-- Sử dụng icon mới -->
 
-    <item
-        android:id="@+id/nav_library"
-        android:icon="@drawable/ic_library"
-        android:title="@string/library" />
-
-    <item
-        android:id="@+id/nav_profile"
-        android:icon="@drawable/ic_profile"
-        android:title="@string/profile" />
-
+    <item android:id="@+id/nav_profile"
+        android:title="Hồ sơ"
+        android:icon="@drawable/ic_profile"/> <!-- Sử dụng icon mới -->
 </menu>

@@ -6,68 +6,62 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.example.truyenchu.R;
 import com.example.truyenchu.model.Truyen;
-
 import java.util.List;
 
 public class RecentUpdatesAdapter extends RecyclerView.Adapter<RecentUpdatesAdapter.ViewHolder> {
-
     private final Context context;
-    private final List<Truyen> truyenList;
+    private final List<Truyen> list;
+    private OnItemClickListener listener;
 
-    public RecentUpdatesAdapter(Context context, List<Truyen> truyenList) {
+    public interface OnItemClickListener { void onItemClick(Truyen truyen); }
+    public void setOnItemClickListener(OnItemClickListener listener) { this.listener = listener; }
+
+    public RecentUpdatesAdapter(Context context, List<Truyen> list) {
         this.context = context;
-        this.truyenList = truyenList;
+        this.list = list;
     }
 
-    @NonNull
-    @Override
+    @NonNull @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // SỬA Ở ĐÂY: Dùng đúng layout item_truyen_recent
         View view = LayoutInflater.from(context).inflate(R.layout.item_truyen_recent, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Truyen truyen = truyenList.get(position);
+        Truyen truyen = list.get(position);
         holder.tvTenTruyen.setText(truyen.getTen());
-        holder.tvTacGia.setText(truyen.getTacGia());
+        holder.tvTacGia.setText("Tác giả: " + truyen.getTacGia());
+        // THAY ĐỔI: Hiển thị thể loại
+        holder.tvTheLoai.setText("Thể loại: " + truyen.getTheLoaiTags());
+        Glide.with(context).load(truyen.getAnhBia()).into(holder.ivAnhBia);
+        // Tạm thời ẩn thông tin cập nhật vì chưa có dữ liệu này
+        holder.tvUpdateInfo.setVisibility(View.GONE);
 
-        // TODO: Cập nhật thông tin chương và thời gian thực tế
-        holder.tvUpdateInfo.setText("Cập nhật gần đây");
-
-        Glide.with(context)
-                .load(truyen.getAnhBia())
-                .placeholder(R.drawable.hero_background)
-                .error(R.drawable.hero_background)
-                .into(holder.ivAnhBia);
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(truyen);
+        });
     }
 
-    @Override
-    public int getItemCount() {
-        return truyenList.size();
-    }
+    @Override public int getItemCount() { return list.size(); }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAnhBia;
-        TextView tvTenTruyen;
-        TextView tvTacGia;
-        TextView tvUpdateInfo;
-
+        // THAY ĐỔI: Thêm TextView cho thể loại
+        TextView tvTenTruyen, tvTacGia, tvUpdateInfo, tvTheLoai;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // SỬA Ở ĐÂY: Ánh xạ đúng các ID từ item_truyen_recent.xml
             ivAnhBia = itemView.findViewById(R.id.iv_anh_bia_recent);
             tvTenTruyen = itemView.findViewById(R.id.tv_ten_truyen_recent);
             tvTacGia = itemView.findViewById(R.id.tv_tac_gia_recent);
             tvUpdateInfo = itemView.findViewById(R.id.tv_update_info_recent);
+            // THAY ĐỔI: Ánh xạ TextView thể loại
+            tvTheLoai = itemView.findViewById(R.id.tv_the_loai_recent);
         }
     }
 }

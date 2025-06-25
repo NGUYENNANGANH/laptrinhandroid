@@ -15,23 +15,22 @@
         android:theme="@style/Theme.Truyenchu"
         tools:targetApi="31">
         <activity
-            android:name=".activity.DonateActivity"
+            android:name=".activity.TaoBaiDangActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.EditProfileActivity"
+            android:name=".activity.activity_tao_bai_dang"
+            android:exported="false" /> <!-- Các Activity nằm trong thư mục activity -->
+        <activity
+            android:name=".activity.TimKiemActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.ChangePasswordActivity"
+            android:name=".activity.ChiTietTruyenActivity"
             android:exported="false" />
-        <activity
-            android:name=".activity.ForgotPasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SigninActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SignupActivity"
-            android:exported="false" />
+        <!--
+         THAY ĐỔI QUAN TRỌNG:
+         Khai báo MainActivity nằm ở thư mục gốc.
+         Dấu "." ở đầu nghĩa là nó nằm trong package gốc (com.example.truyenchu)
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true">

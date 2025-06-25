@@ -57,6 +57,16 @@
                 android:textSize="14sp"
                 android:layout_marginTop="4dp"/>
 
+            <!-- THÊM MỚI: TextView để hiển thị thể loại -->
+            <TextView
+                android:id="@+id/tv_the_loai_recent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thể loại: Khoa học viễn tưởng"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"/>
+
             <TextView
                 android:id="@+id/tv_update_info_recent"
                 android:layout_width="wrap_content"

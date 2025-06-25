@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
@@ -112,6 +114,20 @@ public class ReadingFragment extends Fragment {
         view.findViewById(R.id.btn_chapters).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
         view.findViewById(R.id.btn_settings).setOnClickListener(v -> {
             new SettingsBottomSheetFragment().show(getParentFragmentManager(), "SettingsBottomSheet");
+        });
+
+        // Sự kiện click cho nút Floating Action Button (Text-to-Speech)
+        view.findViewById(R.id.fab_tts).setOnClickListener(v -> {
+            // Lấy nội dung văn bản hiện tại từ TextView
+            String currentText = tvStoryContent.getText().toString();
+
+            if (currentText != null && !currentText.isEmpty()) {
+                // Khởi tạo và hiển thị Bottom Sheet, truyền nội dung vào
+                TtsBottomSheetFragment ttsBottomSheet = TtsBottomSheetFragment.newInstance(currentText);
+                ttsBottomSheet.show(getParentFragmentManager(), ttsBottomSheet.getTag());
+            } else {
+                Toast.makeText(getContext(), "Không có nội dung để đọc", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

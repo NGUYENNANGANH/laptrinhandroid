@@ -10,6 +10,8 @@ import com.example.truyenchu.R;
 import com.example.truyenchu.fragment.CategoryFragment;
 import com.example.truyenchu.fragment.CommunityFragment; // Đảm bảo import đúng tên mới
 import com.example.truyenchu.fragment.HomeFragment;
+import com.example.truyenchu.fragment.LibraryFragment;
+import com.example.truyenchu.fragment.ProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,11 +37,17 @@ public class MainActivity extends AppCompatActivity {
 
                 if (itemId == R.id.nav_home) {
                     selectedFragment = new HomeFragment();
-                } else if (itemId == R.id.nav_category) {
+                } else if (itemId == R.id.nav_categories) {
                     selectedFragment = new CategoryFragment();
                 } else if (itemId == R.id.nav_community) {
                     // THAY ĐỔI CỐT LÕI: Gọi đến CommunityFragment
                     selectedFragment = new CommunityFragment();
+                } else if (itemId == R.id.nav_library) {
+                    // THAY ĐỔI CỐT LÕI: Gọi đến CommunityFragment
+                    selectedFragment = new LibraryFragment();
+                } else if (itemId == R.id.nav_profile) {
+                    // THAY ĐỔI CỐT LÕI: Gọi đến CommunityFragment
+                    selectedFragment = new ProfileFragment();
                 }
 
                 if (selectedFragment != null) {

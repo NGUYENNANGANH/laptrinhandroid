@@ -4,7 +4,7 @@
         android:title="Trang chủ"
         android:icon="@drawable/ic_home"/> <!-- Sử dụng icon mới -->
 
-    <item android:id="@+id/nav_category"
+    <item android:id="@+id/nav_categories"
         android:title="Phân loại"
         android:icon="@drawable/ic_category"/> <!-- Sử dụng icon mới -->
 
@@ -13,7 +13,7 @@
         android:icon="@drawable/ic_community"/> <!-- Sử dụng icon mới -->
 
     <item android:id="@+id/nav_library"
-        android:title="Tủ sách"
+        android:title="Tủ truyện"
         android:icon="@drawable/ic_library"/> <!-- Sử dụng icon mới -->
 
     <item android:id="@+id/nav_profile"

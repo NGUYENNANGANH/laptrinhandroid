@@ -5,8 +5,9 @@ public class Truyen {
     private String ten;
     private String tacGia;
     private String anhBia;
+    private String bannerImage;
     private String moTa;
-    private String theLoaiTags; // Lưu các tag thể loại dưới dạng chuỗi, vd: "Kiếm hiệp, Tiên hiệp"
+    private String theLoaiTags;
     private double danhGia;
     private int soLuongDanhGia;
     private String trangThai;
@@ -15,7 +16,7 @@ public class Truyen {
         // Firebase cần constructor rỗng
     }
 
-    // Getters and Setters
+    // Getters và Setters cho tất cả các trường
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTen() { return ten; }
@@ -24,6 +25,8 @@ public class Truyen {
     public void setTacGia(String tacGia) { this.tacGia = tacGia; }
     public String getAnhBia() { return anhBia; }
     public void setAnhBia(String anhBia) { this.anhBia = anhBia; }
+    public String getBannerImage() { return bannerImage; }
+    public void setBannerImage(String bannerImage) { this.bannerImage = bannerImage; }
     public String getMoTa() { return moTa; }
     public void setMoTa(String moTa) { this.moTa = moTa; }
     public String getTheLoaiTags() { return theLoaiTags; }

@@ -1,66 +1,89 @@
 package com.example.truyenchu.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.truyenchu.R;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link CommunityFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.example.truyenchu.R;
+import com.example.truyenchu.activity.ChiTietTruyenActivity;
+import com.example.truyenchu.activity.TaoBaiDangActivity;
+import com.example.truyenchu.adapter.BaiDangAdapter;
+import com.example.truyenchu.model.BaiDang;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+// THAY ĐỔI: Đổi tên class
 public class CommunityFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private RecyclerView rvBaiDang;
+    private FloatingActionButton fabTaoBaiDang;
+    private BaiDangAdapter adapter;
+    private List<BaiDang> baiDangList = new ArrayList<>();
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public CommunityFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment CommunityFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static CommunityFragment newInstance(String param1, String param2) {
-        CommunityFragment fragment = new CommunityFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // THAY ĐỔI: Sử dụng layout đã đổi tên
         return inflater.inflate(R.layout.fragment_community, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        rvBaiDang = view.findViewById(R.id.rv_bai_dang);
+        fabTaoBaiDang = view.findViewById(R.id.fab_tao_bai_dang);
+
+        setupRecyclerView();
+        loadBaiDang();
+
+        fabTaoBaiDang.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), TaoBaiDangActivity.class));
+        });
+    }
+
+    private void setupRecyclerView() {
+        rvBaiDang.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new BaiDangAdapter(getContext(), baiDangList, storyId -> {
+            Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
+            intent.putExtra("TRUYEN_ID", storyId);
+            startActivity(intent);
+        });
+        rvBaiDang.setAdapter(adapter);
+    }
+
+    private void loadBaiDang() {
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("bai_dang");
+        dbRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                baiDangList.clear();
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    BaiDang baiDang = dataSnapshot.getValue(BaiDang.class);
+                    baiDangList.add(baiDang);
+                }
+                Collections.sort(baiDangList, (post1, post2) -> Long.compare(post2.getTimestamp(), post1.getTimestamp()));
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) { }
+        });
     }
 }

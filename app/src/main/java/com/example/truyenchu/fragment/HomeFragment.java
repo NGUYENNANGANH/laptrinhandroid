@@ -1,3 +1,4 @@
+// HomeFragment.java (Full code)
 package com.example.truyenchu.fragment;
 
 import android.annotation.SuppressLint;
@@ -16,7 +17,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.example.truyenchu.R;
 import com.example.truyenchu.activity.ChiTietTruyenActivity;
@@ -38,6 +38,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// THÊM IMPORT NÀY
+import com.example.truyenchu.fragment.ChatbotDialogFragment;
+
+
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
 
@@ -57,7 +61,7 @@ public class HomeFragment extends Fragment {
     // Data Lists
     private List<Truyen> featuredTruyenList;
     private List<Truyen> recentTruyenList;
-    private List<Truyen> sliderTruyenList; // Dùng lại List<Truyen>
+    private List<Truyen> sliderTruyenList;
 
     private DatabaseReference databaseReference;
 
@@ -98,29 +102,27 @@ public class HomeFragment extends Fragment {
         searchEditText.setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), TimKiemActivity.class)));
 
+        // ---- PHẦN ĐƯỢC SỬA ----
+        // Xử lý sự kiện click cho nút chat
         fabChat.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Chức năng Chatbot sẽ được cập nhật sau", Toast.LENGTH_SHORT).show();
+            // Mở Chatbot Dialog
+            ChatbotDialogFragment chatbotDialog = new ChatbotDialogFragment();
+            chatbotDialog.show(getParentFragmentManager(), "ChatbotDialogFragment_Tag");
         });
+        // ---- KẾT THÚC PHẦN SỬA ----
     }
 
     private void setupSlider() {
         sliderTruyenList = new ArrayList<>();
-        // Sử dụng Adapter với danh sách Truyen và có listener
         sliderAdapter = new StorySliderAdapter(getContext(), sliderTruyenList, this::onItemClick);
         viewPager.setAdapter(sliderAdapter);
-
-        // Kết nối ViewPager2 với TabLayout (dấu chấm chỉ báo)
         new TabLayoutMediator(tabLayoutIndicator, viewPager, (tab, position) -> {}).attach();
-
-        // Logic tự động trượt
         sliderRunnable = () -> {
             if (sliderAdapter.getItemCount() > 0) {
                 int currentItem = viewPager.getCurrentItem();
                 viewPager.setCurrentItem((currentItem + 1) % sliderAdapter.getItemCount(), true);
             }
         };
-
-        // Đặt lại timer khi người dùng tự tay lướt
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -147,6 +149,8 @@ public class HomeFragment extends Fragment {
         recentAdapter.setOnItemClickListener(this::onItemClick);
     }
 
+
+
     private void onItemClick(Truyen truyen) {
         if (truyen == null || truyen.getId() == null) return;
         Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
@@ -168,7 +172,6 @@ public class HomeFragment extends Fragment {
                     if (truyen != null) {
                         truyen.setId(dataSnapshot.getKey());
                         featuredTruyenList.add(truyen);
-                        // Chỉ thêm vào slider nếu truyện có ảnh banner
                         if (truyen.getBannerImage() != null && !truyen.getBannerImage().isEmpty()) {
                             sliderTruyenList.add(truyen);
                         }
@@ -180,7 +183,6 @@ public class HomeFragment extends Fragment {
                 featuredAdapter.notifyDataSetChanged();
                 sliderAdapter.notifyDataSetChanged();
 
-                // Bắt đầu tự động trượt sau khi có dữ liệu
                 sliderHandler.removeCallbacks(sliderRunnable);
                 sliderHandler.postDelayed(sliderRunnable, 3000);
             }

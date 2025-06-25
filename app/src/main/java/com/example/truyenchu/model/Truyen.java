@@ -15,6 +15,19 @@ public class Truyen {
     public Truyen() {
         // Firebase cần constructor rỗng
     }
+    public Truyen(String id, String ten, String tacGia, String anhBia, String trangThai, String moTa) {
+        this.id = id;
+        this.ten = ten;
+        this.tacGia = tacGia;
+        this.anhBia = anhBia;
+        this.trangThai = trangThai;
+        this.moTa = moTa;
+        // Gán giá trị mặc định cho các trường khác nếu cần
+        this.bannerImage = "";
+        this.theLoaiTags = "Tiên hiệp";
+        this.danhGia = 4.5;
+        this.soLuongDanhGia = 100;
+    }
 
     // Getters và Setters cho tất cả các trường
     public String getId() { return id; }

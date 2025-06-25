@@ -59,10 +59,14 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(libs.support.annotations)
 
     // Thư viện cho Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(libs.play.services.auth)
+
+    implementation("androidx.fragment:fragment-ktx:1.8.0")
+
 }

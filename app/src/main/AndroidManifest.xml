@@ -14,7 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Truyenchu"
         tools:targetApi="31">
-
+        <activity
+            android:name=".activity.SignupActivity"
+            android:exported="false" />
         <activity
             android:name=".activity.ChangePasswordActivity"
             android:exported="false" />
@@ -25,9 +27,6 @@
             android:name=".activity.SigninActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.SignupActivity"
-            android:exported="false" />
-        <activity
             android:name=".activity.EditProfileActivity"
             android:exported="false" />
         <activity
@@ -36,7 +35,6 @@
         <activity
             android:name=".activity.TaoBaiDangActivity"
             android:exported="false" />
-
         <activity
             android:name=".activity.TimKiemActivity"
             android:exported="false" />
@@ -48,28 +46,19 @@
          Khai báo MainActivity nằm ở thư mục gốc.
          Dấu "." ở đầu nghĩa là nó nằm trong package gốc (com.example.truyenchu)
         -->
-<!--        <activity-->
-<!--            android:name=".activity.TestAuthActivity"-->
-<!--            android:exported="true" />-->
-
-<!--        <activity-->
-<!--            android:name=".activity.TestAuthActivity"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>-->
-<!--        </activity>-->
-
+        <!-- <activity -->
+        <!-- android:name=".activity.TestAuthActivity" -->
+        <!-- android:exported="true" /> -->
+        <!-- <activity -->
+        <!-- android:name=".activity.TestAuthActivity" -->
+        <!-- android:exported="true"> -->
+        <!-- <intent-filter> -->
+        <!-- <action android:name="android.intent.action.MAIN" /> -->
+        <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+        <!-- </intent-filter> -->
+        <!-- </activity> -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
-            <!-- Tạm thời không có intent-filter ở đây -->
-        </activity>
-
-
-        <activity
-            android:name=".activity.TestAuthActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,19 +1,5 @@
-// helpers/GeminiHelper.java (Sửa lỗi đường dẫn package)
 
-/*
- * QUAN TRỌNG - HƯỚNG DẪN SỬA LỖI
- * Lỗi "Class 'GeminiHelper' is public, should be declared in a file named 'GeminiHelper.java'"
- * xảy ra vì Java yêu cầu tên file phải TRÙNG KHỚP với tên class public bên trong nó.
- *
- * ĐỂ SỬA LỖI, BẠN CẦN LÀM THEO CÁC BƯỚC SAU:
- * 1. ĐỔI TÊN FILE: Đảm bảo tên file này là `GeminiHelper.java`.
- * 2. DI CHUYỂN FILE: Kéo và thả file `GeminiHelper.java` này vào đúng thư mục `helpers`.
- * Đường dẫn đúng phải là: `app/src/main/java/com/example/truyenchu/helpers/GeminiHelper.java`
- * 3. ĐỒNG BỘ LẠI: Sau khi di chuyển file, chọn "Build > Rebuild Project" để Android Studio cập nhật.
- *
- * Dòng `package` dưới đây đã được sửa lại cho đúng.
- */
-package com.example.truyenchu.helpers; // SỬA LỖI: Trả về package đúng là 'helpers'
+package com.example.truyenchu.helpers;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

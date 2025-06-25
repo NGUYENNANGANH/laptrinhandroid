@@ -1,5 +1,14 @@
 <resources>
-    <string name="app_name">truyenchu</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">TruyenChu</string>
+    <!-- Các string mới cần cho HomeFragment -->
+    <string name="notifications">Thông báo</string>
+    <string name="hero_title">Khám phá thế giới mới</string>
+    <string name="read_now">Đọc ngay</string>
+    <string name="search">Tìm kiếm</string>
+    <string name="search_hint">Tìm kiếm truyện yêu thích...</string>
+    <string name="featured_content">Nổi bật</string>
+    <string name="recent_updates">Mới cập nhật</string>
+    <string name="see_all">Xem tất cả</string>
+    <string name="chat">Trò chuyện với AI</string>
+    <string name="book_cover">Ảnh bìa truyện</string>
 </resources>

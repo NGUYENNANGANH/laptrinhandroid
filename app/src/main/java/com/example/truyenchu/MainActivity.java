@@ -9,7 +9,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.truyenchu.R;
 import com.example.truyenchu.fragment.CategoryFragment;
 import com.example.truyenchu.fragment.CongDongFragment;
-//import com.example.truyenchu.fragment.HomeFragment;
+import com.example.truyenchu.fragment.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,11 +22,10 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(navListener);
 
-        // THAY ĐỔI Ở ĐÂY:
-        // Đặt CategoryFragment làm màn hình mặc định để tránh lỗi
+        // THAY ĐỔI: Đặt HomeFragment làm màn hình mặc định khi khởi động
         if (savedInstanceState == null) {
-            bottomNav.setSelectedItemId(R.id.nav_category); // Đặt tab Category được highlight
-            loadFragment(new CategoryFragment()); // Tải CategoryFragment lên màn hình
+            bottomNav.setSelectedItemId(R.id.nav_home); // Highlight tab Home
+            loadFragment(new HomeFragment()); // Tải HomeFragment lên màn hình
         }
     }
 
@@ -35,15 +34,14 @@ public class MainActivity extends AppCompatActivity {
                 Fragment selectedFragment = null;
                 int itemId = item.getItemId();
 
-                if (itemId == R.id.nav_category) {
-                    // Khi bạn của bạn làm xong, dòng này sẽ hoạt động
-//                    selectedFragment = new HomeFragment();
+                if (itemId == R.id.nav_home) {
+                    selectedFragment = new HomeFragment();
+                } else if (itemId == R.id.nav_category) {
                     selectedFragment = new CategoryFragment();
-//                } else if (itemId == R.id.nav_category) {
-//                    selectedFragment = new CategoryFragment();
                 } else if (itemId == R.id.nav_community) {
                     selectedFragment = new CongDongFragment();
                 }
+                // Bạn có thể thêm các Fragment khác ở đây
 
                 if (selectedFragment != null) {
                     loadFragment(selectedFragment);

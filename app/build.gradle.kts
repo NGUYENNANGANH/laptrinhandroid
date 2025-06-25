@@ -31,38 +31,48 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
-// Thay thế toàn bộ khối dependencies của bạn bằng khối này
 
 dependencies {
 
-    // Khai báo Firebase BoM (Bill of Materials) - CHỈ MỘT LẦN
-    // Dòng này quản lý phiên bản cho tất cả các thư viện Firebase khác.
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // Giữ lại phiên bản mới nhất
-
-    // Các thư viện AndroidX cơ bản
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-
-    // Các thư viện Firebase
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-database")
-    implementation("com.google.firebase:firebase-storage")
-    // DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI: Thêm thư viện Firestore
-    implementation("com.google.firebase:firebase-firestore")
-
-    // Các thư viện bên thứ ba
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("de.hdodenhof:circleimageview:3.1.0")
-    implementation(libs.navigation.fragment)
-    implementation(libs.navigation.ui)
-
-    // Thư viện cho Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(libs.play.services.auth)
+    dependencies {
+        // Core Android UI components - Rất cần thiết cho giao diện và hoạt động của app
+        implementation("androidx.appcompat:appcompat:1.6.1")
+        implementation("com.google.android.material:material:1.11.0")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+        implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+        // Firebase - Sử dụng Bill of Materials (BOM) để quản lý phiên bản
+        // Cú pháp platform(...) đảm bảo các thư viện Firebase khác tương thích với nhau
+        implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
+        implementation("com.google.firebase:firebase-database")
+        implementation("com.google.firebase:firebase-analytics") // Thêm analytics theo gợi ý, rất hữu ích
+        implementation("com.google.firebase:firebase-auth")     // Thêm auth để chuẩn bị cho tính năng đăng nhập
+
+        // Glide for image loading
+        implementation("com.github.bumptech.glide:glide:4.16.0")
+        implementation(libs.appcompat)
+        implementation(libs.material)
+        implementation(libs.activity)
+        implementation(libs.constraintlayout)
+        testImplementation(libs.junit)
+        androidTestImplementation(libs.ext.junit)
+        androidTestImplementation(libs.espresso.core)
+        implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
+        implementation("com.google.firebase:firebase-analytics")
+        implementation ("com.google.firebase:firebase-database")
+        implementation ("com.google.firebase:firebase-auth")
+        implementation ("androidx.recyclerview:recyclerview:1.3.2")
+        implementation ("com.github.bumptech.glide:glide:4.16.0")
+        implementation("com.google.firebase:firebase-storage")
+        implementation ("de.hdodenhof:circleimageview:3.1.0")
+    }
+
+
 }

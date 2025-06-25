@@ -1,3 +1,4 @@
+// HomeFragment.java (Full code - Đã sửa lỗi và tăng cường sự ổn định)
 package com.example.truyenchu.fragment;
 
 import android.annotation.SuppressLint;
@@ -16,27 +17,40 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.Toast; // Thêm import cho Toast
 
+import com.bumptech.glide.Glide;
+import com.example.truyenchu.MainActivity;
 import com.example.truyenchu.R;
 import com.example.truyenchu.activity.ChiTietTruyenActivity;
+import com.example.truyenchu.activity.SigninActivity;
 import com.example.truyenchu.activity.TimKiemActivity;
 import com.example.truyenchu.adapter.FeaturedTruyenAdapter;
 import com.example.truyenchu.adapter.RecentUpdatesAdapter;
 import com.example.truyenchu.adapter.StorySliderAdapter;
 import com.example.truyenchu.model.Truyen;
+import com.example.truyenchu.model.User;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
+
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
@@ -48,6 +62,9 @@ public class HomeFragment extends Fragment {
     private ViewPager2 viewPager;
     private TabLayout tabLayoutIndicator;
     private FloatingActionButton fabChat;
+    private CircleImageView profileImage;
+    private ImageView btnNotifications;
+
 
     // Adapters
     private FeaturedTruyenAdapter featuredAdapter;
@@ -57,7 +74,7 @@ public class HomeFragment extends Fragment {
     // Data Lists
     private List<Truyen> featuredTruyenList;
     private List<Truyen> recentTruyenList;
-    private List<Truyen> sliderTruyenList; // Dùng lại List<Truyen>
+    private List<Truyen> sliderTruyenList;
 
     private DatabaseReference databaseReference;
 
@@ -82,6 +99,14 @@ public class HomeFragment extends Fragment {
         viewPager = view.findViewById(R.id.view_pager_hero_section);
         tabLayoutIndicator = view.findViewById(R.id.tab_layout_indicator);
         fabChat = view.findViewById(R.id.fab_chat);
+        profileImage = view.findViewById(R.id.profile_image);
+        btnNotifications = view.findViewById(R.id.btn_notifications);
+
+        // Kiểm tra xem các view quan trọng đã được khởi tạo chưa
+        if (profileImage == null) {
+            Log.e(TAG, "profileImage not found in layout!");
+            return;
+        }
 
         databaseReference = FirebaseDatabase.getInstance().getReference("truyen");
 
@@ -95,32 +120,122 @@ public class HomeFragment extends Fragment {
         loadRecentUpdates();
 
         // Xử lý sự kiện click
+        setupClickListeners();
+    }
+
+    private void setupClickListeners() {
         searchEditText.setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), TimKiemActivity.class)));
 
         fabChat.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Chức năng Chatbot sẽ được cập nhật sau", Toast.LENGTH_SHORT).show();
+            if (getParentFragmentManager() != null) {
+                ChatbotDialogFragment chatbotDialog = new ChatbotDialogFragment();
+                chatbotDialog.show(getParentFragmentManager(), "ChatbotDialogFragment_Tag");
+            }
         });
+
+        // Kiểm tra profileImage có null không trước khi set click listener
+        if (profileImage != null) {
+            // SỬA LỖI: Bổ sung try-catch và kiểm tra null safety để tránh crash
+            profileImage.setOnClickListener(v -> {
+                try {
+                    Log.d(TAG, "Avatar clicked!");
+                    
+                    if (getActivity() == null || !isAdded()) {
+                        Log.w(TAG, "Fragment not attached or activity is null");
+                        return;
+                    }
+
+                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                    Log.d(TAG, "Current user: " + (currentUser != null ? currentUser.getUid() : "null"));
+                    
+                    if (currentUser != null) {
+                        // Nếu đã đăng nhập, chuyển đến tab Profile
+                        Log.d(TAG, "User is logged in, navigating to profile tab");
+                        navigateToProfileTab();
+                    } else {
+                        // Nếu chưa đăng nhập, chuyển đến trang đăng nhập
+                        Log.d(TAG, "User not logged in, navigating to sign in");
+                        Toast.makeText(getContext(), "Đang chuyển đến trang đăng nhập...", Toast.LENGTH_SHORT).show();
+                        navigateToSignIn();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error handling avatar click: ", e);
+                    Toast.makeText(getContext(), "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Log.e(TAG, "profileImage is null, cannot set click listener");
+        }
+
+        btnNotifications.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Chức năng thông báo sẽ được cập nhật sau.", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    /**
+     * Phương thức riêng để xử lý chuyển đến tab Profile
+     */
+    private void navigateToProfileTab() {
+        try {
+            if (getActivity() instanceof MainActivity) {
+                MainActivity mainActivity = (MainActivity) getActivity();
+                BottomNavigationView bottomNav = mainActivity.findViewById(R.id.bottom_navigation);
+                if (bottomNav != null) {
+                    bottomNav.setSelectedItemId(R.id.nav_profile);
+                } else {
+                    Log.w(TAG, "BottomNavigationView not found");
+                }
+            } else {
+                Log.w(TAG, "Activity is not MainActivity");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error navigating to profile tab: ", e);
+        }
+    }
+
+    /**
+     * Phương thức riêng để xử lý chuyển đến trang đăng nhập
+     */
+    private void navigateToSignIn() {
+        try {
+            Log.d(TAG, "navigateToSignIn called");
+            
+            if (getActivity() == null) {
+                Log.e(TAG, "Activity is null, cannot navigate to SignIn");
+                return;
+            }
+            
+            if (!isAdded()) {
+                Log.e(TAG, "Fragment not added, cannot navigate to SignIn");
+                return;
+            }
+            
+            Log.d(TAG, "Creating intent for SigninActivity");
+            Intent intent = new Intent(getActivity(), SigninActivity.class);
+            
+            Log.d(TAG, "Starting SigninActivity");
+            startActivity(intent);
+            
+            Log.d(TAG, "SigninActivity started successfully");
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error navigating to sign in: ", e);
+            Toast.makeText(getContext(), "Không thể mở trang đăng nhập: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupSlider() {
         sliderTruyenList = new ArrayList<>();
-        // Sử dụng Adapter với danh sách Truyen và có listener
         sliderAdapter = new StorySliderAdapter(getContext(), sliderTruyenList, this::onItemClick);
         viewPager.setAdapter(sliderAdapter);
-
-        // Kết nối ViewPager2 với TabLayout (dấu chấm chỉ báo)
         new TabLayoutMediator(tabLayoutIndicator, viewPager, (tab, position) -> {}).attach();
-
-        // Logic tự động trượt
         sliderRunnable = () -> {
-            if (sliderAdapter.getItemCount() > 0) {
+            if (sliderAdapter != null && sliderAdapter.getItemCount() > 0) {
                 int currentItem = viewPager.getCurrentItem();
                 viewPager.setCurrentItem((currentItem + 1) % sliderAdapter.getItemCount(), true);
             }
         };
-
-        // Đặt lại timer khi người dùng tự tay lướt
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -148,7 +263,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void onItemClick(Truyen truyen) {
-        if (truyen == null || truyen.getId() == null) return;
+        if (truyen == null || truyen.getId() == null || getActivity() == null) return;
         Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
         intent.putExtra("TRUYEN_ID", truyen.getId());
         startActivity(intent);
@@ -160,6 +275,7 @@ public class HomeFragment extends Fragment {
             @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded() || getContext() == null) return;
                 featuredTruyenList.clear();
                 sliderTruyenList.clear();
 
@@ -168,7 +284,6 @@ public class HomeFragment extends Fragment {
                     if (truyen != null) {
                         truyen.setId(dataSnapshot.getKey());
                         featuredTruyenList.add(truyen);
-                        // Chỉ thêm vào slider nếu truyện có ảnh banner
                         if (truyen.getBannerImage() != null && !truyen.getBannerImage().isEmpty()) {
                             sliderTruyenList.add(truyen);
                         }
@@ -177,10 +292,9 @@ public class HomeFragment extends Fragment {
                 Collections.reverse(featuredTruyenList);
                 Collections.reverse(sliderTruyenList);
 
-                featuredAdapter.notifyDataSetChanged();
-                sliderAdapter.notifyDataSetChanged();
+                if (featuredAdapter != null) featuredAdapter.notifyDataSetChanged();
+                if (sliderAdapter != null) sliderAdapter.notifyDataSetChanged();
 
-                // Bắt đầu tự động trượt sau khi có dữ liệu
                 sliderHandler.removeCallbacks(sliderRunnable);
                 sliderHandler.postDelayed(sliderRunnable, 3000);
             }
@@ -197,6 +311,7 @@ public class HomeFragment extends Fragment {
             @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!isAdded()) return;
                 recentTruyenList.clear();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Truyen truyen = dataSnapshot.getValue(Truyen.class);
@@ -206,13 +321,75 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 Collections.reverse(recentTruyenList);
-                recentAdapter.notifyDataSetChanged();
+                if (recentAdapter != null) recentAdapter.notifyDataSetChanged();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "loadRecentUpdates onCancelled: ", error.toException());
             }
         });
+    }
+
+    private void loadUserInfoToAvatar() {
+        try {
+            if (!isAdded() || getContext() == null) {
+                Log.w(TAG, "Fragment not attached, skipping avatar load");
+                return;
+            }
+
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                // Người dùng đã đăng nhập - tải ảnh đại diện từ Firestore
+                FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
+                        .addOnSuccessListener(documentSnapshot -> {
+                            if (!isAdded() || getContext() == null) {
+                                return;
+                            }
+
+                            try {
+                                if (documentSnapshot.exists()) {
+                                    User user = documentSnapshot.toObject(User.class);
+                                    if (user != null && user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+                                        Glide.with(getContext()).load(user.getProfileImage()).into(profileImage);
+                                    } else {
+                                        // Người dùng đã đăng nhập nhưng chưa có ảnh đại diện
+                                        profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
+                                    }
+                                } else {
+                                    profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error setting user avatar: ", e);
+                                if (isAdded()) {
+                                    profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
+                                }
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Error loading user from Firestore: ", e);
+                            if (isAdded()) {
+                                profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
+                            }
+                        });
+            } else {
+                // Người dùng chưa đăng nhập - hiển thị icon mặc định để khuyến khích đăng nhập
+                if (isAdded()) {
+                    profileImage.setImageResource(R.drawable.default_avatar); // Sử dụng default_avatar có sẵn
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in loadUserInfoToAvatar: ", e);
+            if (isAdded()) {
+                profileImage.setImageResource(R.drawable.default_avatar);
+            }
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Cập nhật avatar mỗi khi fragment được hiển thị
+        loadUserInfoToAvatar();
     }
 
     @Override
@@ -224,6 +401,14 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        loadUserInfoToAvatar();
         sliderHandler.postDelayed(sliderRunnable, 3000);
+    }
+
+    /**
+     * Phương thức public để refresh avatar từ bên ngoài (có thể gọi từ MainActivity)
+     */
+    public void refreshUserAvatar() {
+        loadUserInfoToAvatar();
     }
 }

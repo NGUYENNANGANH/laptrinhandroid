@@ -125,7 +125,7 @@ public class SigninActivity extends AppCompatActivity {
                         // Đăng nhập thành công
                         goToMainActivity();
                     }
-        }).addOnFailureListener(e -> Log.e(TAG, "Lỗi không thể đăng nhập ", e));
+                }).addOnFailureListener(e -> Log.e(TAG, "Lỗi không thể đăng nhập ", e));
     }
 
     // SignIn by Google

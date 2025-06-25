@@ -1,7 +1,20 @@
+// build.gradle.kts (hoặc build.gradle nếu bạn dùng Groovy)
+
+// Thêm import này ở đầu file nếu là file .kts
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
 }
+
+// Đọc API Key từ local.properties
+val properties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream())
+}
+
 
 android {
     namespace = "com.example.truyenchu"
@@ -15,6 +28,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ĐẶT DÒNG NÀY VÀO ĐÚNG VỊ TRÍ BÊN TRONG defaultConfig
+        buildConfigField("String", "GEMINI_API_KEY", "\"${properties.getProperty("GEMINI_API_KEY", "")}\"")
     }
 
     buildTypes {
@@ -30,43 +46,45 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
-// Thay thế toàn bộ khối dependencies của bạn bằng khối này
 
+// KHỐI DEPENDENCIES ĐÃ ĐƯỢC DỌN DẸP SẠCH SẼ
 dependencies {
 
-    // Khai báo Firebase BoM (Bill of Materials) - CHỈ MỘT LẦN
-    // Dòng này quản lý phiên bản cho tất cả các thư viện Firebase khác.
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // Giữ lại phiên bản mới nhất
-
-    // Các thư viện AndroidX cơ bản
+    // AndroidX & UI
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 
-    // Các thư viện Firebase
+    // Firebase (sử dụng BoM - Bill of Materials để quản lý phiên bản)
+    // Chỉ cần khai báo platform một lần
+    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
+    implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-storage")
-    // DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI: Thêm thư viện Firestore
-    implementation("com.google.firebase:firebase-firestore")
 
-    // Các thư viện bên thứ ba
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+    // Image Loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("de.hdodenhof:circleimageview:3.1.0")
-    implementation(libs.navigation.fragment)
-    implementation(libs.navigation.ui)
-    implementation(libs.support.annotations)
 
-    // Thư viện cho Testing
+    // Google AI
+    implementation("com.google.ai.client.generativeai:generativeai:0.6.0")
+    // Thêm thư viện Gson để xử lý JSON, rất cần cho code GeminiHelper
+    implementation("com.google.code.gson:gson:2.10.1")
+
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(libs.play.services.auth)
-
-    implementation("androidx.fragment:fragment-ktx:1.8.0")
+    implementation("com.google.firebase:firebase-firestore")
 
 }

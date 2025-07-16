@@ -6,17 +6,42 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast; // Thêm import cho Toast
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
+
 import com.example.truyenchu.R;
+import com.example.truyenchu.database.AppDatabase;
+import com.example.truyenchu.database.ChuongDao;
 import com.example.truyenchu.model.Chuong;
+import com.example.truyenchu.model.DownloadedChuong;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.List;
 
 public class ChuongAdapter extends RecyclerView.Adapter<ChuongAdapter.ViewHolder> {
     private final List<Chuong> chuongList;
     private Context context;
+    private String truyenId;
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private OnChapterClickListener listener; // Thêm listener
+
+    // Interface để xử lý sự kiện click
+    public interface OnChapterClickListener {
+        void onChapterClick(Chuong chapter);
+    }
+
+    public void setOnChapterClickListener(OnChapterClickListener listener) {
+        this.listener = listener;
+    }
 
     public ChuongAdapter(Context context, List<Chuong> chuongList) {
         this.context = context;
@@ -36,14 +61,71 @@ public class ChuongAdapter extends RecyclerView.Adapter<ChuongAdapter.ViewHolder
         holder.tvTenChuong.setText(chuong.getTen());
         holder.tvNgayDang.setText(chuong.getNgayDang());
 
+        AppDatabase db = Room.databaseBuilder(context, AppDatabase.class, "app-database")
+                .allowMainThreadQueries() // Chỉ dùng tạm thời, nên dùng thread riêng cho production
+                .fallbackToDestructiveMigration()
+                .build();
+        ChuongDao chuongDao = db.chuongDao();
+
         // Gán sự kiện click cho nút tải xuống
         holder.btnDownload.setOnClickListener(v -> {
-            // Hiển thị thông báo tạm thời để xác nhận nút hoạt động
-            Toast.makeText(context, "Bắt đầu tải " + chuong.getTen(), Toast.LENGTH_SHORT).show();
+            String downloadedId = truyenId + "_" + chuong.getId();
+            DownloadedChuong downloadedChuong = chuongDao.getChuong(downloadedId);
+            if (downloadedChuong != null) {
+                Toast.makeText(context, "Chương đã được tải trước đó", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Trong tương lai, bạn có thể thêm logic tải truyện về máy tại đây
-            // ví dụ: gọi một DownloadManager hoặc lưu nội dung chương vào database cục bộ.
+            DatabaseReference chuongRef = FirebaseDatabase.getInstance().getReference()
+                    .child("chuong").child(truyenId).child(chuong.getId()).child("noiDung");
+
+            chuongRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String noiDung = snapshot.getValue(String.class);
+                    if (noiDung != null) {
+                        DownloadedChuong newDownloadedChuong = new DownloadedChuong(truyenId, chuong.getId());
+                        newDownloadedChuong.noiDung = noiDung;
+                        newDownloadedChuong.ngayDang = chuong.getNgayDang();
+                        chuongDao.insertChuong(newDownloadedChuong);
+
+                        FirebaseUser currentUser = mAuth.getCurrentUser();
+                        if (currentUser != null) {
+                            DatabaseReference downloadedRef = FirebaseDatabase.getInstance().getReference()
+                                    .child("user_library")
+                                    .child(currentUser.getUid())
+                                    .child("downloaded")
+                                    .child(truyenId)
+                                    .child(chuong.getId());
+
+                            downloadedRef.setValue(true).addOnSuccessListener(aVoid ->
+                                    Toast.makeText(context, "Tải xuống thành công: " + chuong.getTen(), Toast.LENGTH_SHORT).show()
+                            ).addOnFailureListener(e ->
+                                    Toast.makeText(context, "Không tìm thấy nội dung chương", Toast.LENGTH_SHORT).show()
+                            );
+                        }
+                    } else {
+                        Toast.makeText(context, "Không tìm thấy nội dung chương", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(context, "Lỗi khi tải chương", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
+
+        // Gán sự kiện click cho cả item để mở ReadingFragment
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onChapterClick(chuong);
+            }
+        });
+    }
+
+    public void setTruyenId(String truyenId) {
+        this.truyenId = truyenId;
     }
 
     @Override
@@ -53,13 +135,12 @@ public class ChuongAdapter extends RecyclerView.Adapter<ChuongAdapter.ViewHolder
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTenChuong, tvNgayDang;
-        ImageButton btnDownload; // Nút tải xuống
+        ImageButton btnDownload;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTenChuong = itemView.findViewById(R.id.tv_ten_chuong);
             tvNgayDang = itemView.findViewById(R.id.tv_ngay_dang);
-            // Ánh xạ nút bấm từ layout bằng ID
             btnDownload = itemView.findViewById(R.id.btn_download_chapter);
         }
     }

@@ -57,6 +57,17 @@
             android:maxLines="2"
             android:ellipsize="end"/>
 
+        <TextView
+            android:id="@+id/tv_chuong_truyen_featured"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chương 1: Thành phố Hà Nội"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            android:padding="8dp"
+            android:maxLines="2"
+            android:ellipsize="end"/>
+
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

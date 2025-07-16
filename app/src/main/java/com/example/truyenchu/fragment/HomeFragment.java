@@ -1,4 +1,3 @@
-// HomeFragment.java (Full code - Đã sửa lỗi và tăng cường sự ổn định)
 package com.example.truyenchu.fragment;
 
 import android.annotation.SuppressLint;
@@ -12,13 +11,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast; // Thêm import cho Toast
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.truyenchu.MainActivity;
@@ -51,7 +52,6 @@ import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
 
@@ -64,7 +64,7 @@ public class HomeFragment extends Fragment {
     private FloatingActionButton fabChat;
     private CircleImageView profileImage;
     private ImageView btnNotifications;
-
+    private Button btnLogin;
 
     // Adapters
     private FeaturedTruyenAdapter featuredAdapter;
@@ -77,20 +77,23 @@ public class HomeFragment extends Fragment {
     private List<Truyen> sliderTruyenList;
 
     private DatabaseReference databaseReference;
+    private FirebaseAuth mAuth;
 
     // Auto-slide handler
     private Handler sliderHandler = new Handler(Looper.getMainLooper());
     private Runnable sliderRunnable;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Khởi tạo Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
         // Ánh xạ các views
         featuredRecyclerView = view.findViewById(R.id.featured_recycler_view);
@@ -101,31 +104,26 @@ public class HomeFragment extends Fragment {
         fabChat = view.findViewById(R.id.fab_chat);
         profileImage = view.findViewById(R.id.profile_image);
         btnNotifications = view.findViewById(R.id.btn_notifications);
-
-        // Kiểm tra xem các view quan trọng đã được khởi tạo chưa
-        if (profileImage == null) {
-            Log.e(TAG, "profileImage not found in layout!");
-            return;
-        }
+        btnLogin = view.findViewById(R.id.btn_login_home);
 
         databaseReference = FirebaseDatabase.getInstance().getReference("truyen");
 
-        // Thiết lập tất cả các view
+        // Thiết lập các view không phụ thuộc vào trạng thái đăng nhập
         setupSlider();
         setupFeaturedRecyclerView();
         setupRecentUpdatesRecyclerView();
+        setupStaticClickListeners(); // Cài đặt các listener tĩnh
 
-        // Tải dữ liệu cho các danh sách truyện
+        // Tải dữ liệu truyện
         loadFeaturedStories();
         loadRecentUpdates();
-
-        // Xử lý sự kiện click
-        setupClickListeners();
     }
 
-    private void setupClickListeners() {
-        searchEditText.setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), TimKiemActivity.class)));
+    /**
+     * Cài đặt các listener tĩnh, không thay đổi theo trạng thái đăng nhập
+     */
+    private void setupStaticClickListeners() {
+        searchEditText.setOnClickListener(v -> startActivity(new Intent(getActivity(), TimKiemActivity.class)));
 
         fabChat.setOnClickListener(v -> {
             if (getParentFragmentManager() != null) {
@@ -134,96 +132,86 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Kiểm tra profileImage có null không trước khi set click listener
-        if (profileImage != null) {
-            // SỬA LỖI: Bổ sung try-catch và kiểm tra null safety để tránh crash
-            profileImage.setOnClickListener(v -> {
-                try {
-                    Log.d(TAG, "Avatar clicked!");
-                    
-                    if (getActivity() == null || !isAdded()) {
-                        Log.w(TAG, "Fragment not attached or activity is null");
-                        return;
-                    }
-
-                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-                    Log.d(TAG, "Current user: " + (currentUser != null ? currentUser.getUid() : "null"));
-                    
-                    if (currentUser != null) {
-                        // Nếu đã đăng nhập, chuyển đến tab Profile
-                        Log.d(TAG, "User is logged in, navigating to profile tab");
-                        navigateToProfileTab();
-                    } else {
-                        // Nếu chưa đăng nhập, chuyển đến trang đăng nhập
-                        Log.d(TAG, "User not logged in, navigating to sign in");
-                        Toast.makeText(getContext(), "Đang chuyển đến trang đăng nhập...", Toast.LENGTH_SHORT).show();
-                        navigateToSignIn();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error handling avatar click: ", e);
-                    Toast.makeText(getContext(), "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            Log.e(TAG, "profileImage is null, cannot set click listener");
-        }
-
         btnNotifications.setOnClickListener(v -> {
             Toast.makeText(getContext(), "Chức năng thông báo sẽ được cập nhật sau.", Toast.LENGTH_SHORT).show();
         });
     }
 
     /**
-     * Phương thức riêng để xử lý chuyển đến tab Profile
+     * PHƯƠNG THỨC QUAN TRỌNG NHẤT:
+     * Kiểm tra trạng thái người dùng và cập nhật toàn bộ UI và listener liên quan.
      */
-    private void navigateToProfileTab() {
-        try {
-            if (getActivity() instanceof MainActivity) {
-                MainActivity mainActivity = (MainActivity) getActivity();
-                BottomNavigationView bottomNav = mainActivity.findViewById(R.id.bottom_navigation);
-                if (bottomNav != null) {
-                    bottomNav.setSelectedItemId(R.id.nav_profile);
-                } else {
-                    Log.w(TAG, "BottomNavigationView not found");
-                }
-            } else {
-                Log.w(TAG, "Activity is not MainActivity");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error navigating to profile tab: ", e);
+    private void updateUIBasedOnUserStatus() {
+        if (getContext() == null || !isAdded()) return; // Đảm bảo fragment còn tồn tại
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            // TRƯỜNG HỢP: ĐÃ ĐĂNG NHẬP
+            btnLogin.setVisibility(View.GONE);
+            profileImage.setVisibility(View.VISIBLE);
+
+            // Tải ảnh đại diện từ Firestore
+            FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (getContext() == null || !isAdded()) return;
+                        if (documentSnapshot.exists()) {
+                            User user = documentSnapshot.toObject(User.class);
+                            if (user != null && user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
+                                Glide.with(getContext()).load(user.getProfileImage()).into(profileImage);
+                            } else {
+                                profileImage.setImageResource(R.drawable.ic_avatar_placeholder); // Ảnh mặc định nếu user chưa có ảnh
+                            }
+                        } else {
+                            profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        if (getContext() != null && isAdded())
+                            profileImage.setImageResource(R.drawable.ic_avatar_placeholder); // Ảnh mặc định nếu lỗi
+                    });
+
+            // Gán sự kiện click cho ảnh đại diện
+            profileImage.setOnClickListener(v -> navigateToProfileTab());
+            btnLogin.setOnClickListener(null); // Xóa listener của nút đăng nhập
+
+        } else {
+            // TRƯỜNG HỢP: CHƯA ĐĂNG NHẬP
+            btnLogin.setVisibility(View.VISIBLE);
+            profileImage.setVisibility(View.GONE);
+
+            // Gán sự kiện click cho nút đăng nhập
+            btnLogin.setOnClickListener(v -> navigateToSignIn());
+            profileImage.setOnClickListener(null); // Xóa listener của ảnh đại diện
         }
     }
 
-    /**
-     * Phương thức riêng để xử lý chuyển đến trang đăng nhập
-     */
-    private void navigateToSignIn() {
-        try {
-            Log.d(TAG, "navigateToSignIn called");
-            
-            if (getActivity() == null) {
-                Log.e(TAG, "Activity is null, cannot navigate to SignIn");
-                return;
+
+    private void navigateToProfileTab() {
+        if (getActivity() instanceof MainActivity) {
+            MainActivity mainActivity = (MainActivity) getActivity();
+            BottomNavigationView bottomNav = mainActivity.findViewById(R.id.bottom_navigation);
+            if (bottomNav != null) {
+                bottomNav.setSelectedItemId(R.id.nav_profile);
             }
-            
-            if (!isAdded()) {
-                Log.e(TAG, "Fragment not added, cannot navigate to SignIn");
-                return;
-            }
-            
-            Log.d(TAG, "Creating intent for SigninActivity");
-            Intent intent = new Intent(getActivity(), SigninActivity.class);
-            
-            Log.d(TAG, "Starting SigninActivity");
-            startActivity(intent);
-            
-            Log.d(TAG, "SigninActivity started successfully");
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Error navigating to sign in: ", e);
-            Toast.makeText(getContext(), "Không thể mở trang đăng nhập: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void navigateToSignIn() {
+        if (getActivity() != null) {
+            startActivity(new Intent(getActivity(), SigninActivity.class));
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUIBasedOnUserStatus(); // Cập nhật UI mỗi khi quay lại fragment
+        sliderHandler.postDelayed(sliderRunnable, 3000);
+    }
+
+    // --------------------------------------------------------------------------------------
+    // CÁC PHƯƠNG THỨC KHÁC GIỮ NGUYÊN
+    // --------------------------------------------------------------------------------------
 
     private void setupSlider() {
         sliderTruyenList = new ArrayList<>();
@@ -278,7 +266,6 @@ public class HomeFragment extends Fragment {
                 if (!isAdded() || getContext() == null) return;
                 featuredTruyenList.clear();
                 sliderTruyenList.clear();
-
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Truyen truyen = dataSnapshot.getValue(Truyen.class);
                     if (truyen != null) {
@@ -330,85 +317,9 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void loadUserInfoToAvatar() {
-        try {
-            if (!isAdded() || getContext() == null) {
-                Log.w(TAG, "Fragment not attached, skipping avatar load");
-                return;
-            }
-
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                // Người dùng đã đăng nhập - tải ảnh đại diện từ Firestore
-                FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
-                        .addOnSuccessListener(documentSnapshot -> {
-                            if (!isAdded() || getContext() == null) {
-                                return;
-                            }
-
-                            try {
-                                if (documentSnapshot.exists()) {
-                                    User user = documentSnapshot.toObject(User.class);
-                                    if (user != null && user.getProfileImage() != null && !user.getProfileImage().isEmpty()) {
-                                        Glide.with(getContext()).load(user.getProfileImage()).into(profileImage);
-                                    } else {
-                                        // Người dùng đã đăng nhập nhưng chưa có ảnh đại diện
-                                        profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
-                                    }
-                                } else {
-                                    profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
-                                }
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error setting user avatar: ", e);
-                                if (isAdded()) {
-                                    profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
-                                }
-                            }
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e(TAG, "Error loading user from Firestore: ", e);
-                            if (isAdded()) {
-                                profileImage.setImageResource(R.drawable.ic_avatar_placeholder);
-                            }
-                        });
-            } else {
-                // Người dùng chưa đăng nhập - hiển thị icon mặc định để khuyến khích đăng nhập
-                if (isAdded()) {
-                    profileImage.setImageResource(R.drawable.default_avatar); // Sử dụng default_avatar có sẵn
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error in loadUserInfoToAvatar: ", e);
-            if (isAdded()) {
-                profileImage.setImageResource(R.drawable.default_avatar);
-            }
-        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Cập nhật avatar mỗi khi fragment được hiển thị
-        loadUserInfoToAvatar();
-    }
-
     @Override
     public void onPause() {
         super.onPause();
         sliderHandler.removeCallbacks(sliderRunnable);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadUserInfoToAvatar();
-        sliderHandler.postDelayed(sliderRunnable, 3000);
-    }
-
-    /**
-     * Phương thức public để refresh avatar từ bên ngoài (có thể gọi từ MainActivity)
-     */
-    public void refreshUserAvatar() {
-        loadUserInfoToAvatar();
     }
 }

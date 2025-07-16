@@ -5,6 +5,15 @@ public class Chuong {
     private String ten;
     private String noiDung;
     private String ngayDang;
+    private String truyenId;
+
+    public String getTruyenId() {
+        return truyenId;
+    }
+
+    public void setTruyenId(String truyenId) {
+        this.truyenId = truyenId;
+    }
 
     public Chuong() {
         // Firebase cần constructor rỗng

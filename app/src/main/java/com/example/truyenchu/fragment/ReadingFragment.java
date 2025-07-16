@@ -14,14 +14,18 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import com.example.truyenchu.R;
 import com.example.truyenchu.adapter.ListChapterAdapter;
+import com.example.truyenchu.database.AppDatabase;
+import com.example.truyenchu.database.ChuongDao;
 import com.example.truyenchu.model.Chuong;
+import com.example.truyenchu.model.DownloadedChuong;
 import com.example.truyenchu.model.Truyen;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,61 +40,81 @@ public class ReadingFragment extends Fragment {
 
     private static final String TAG = "ReadingFragment";
     public static final String KEY_STORY_ID = "storyId";
+    public static final String KEY_CHUONG_ID = "chuongId";
 
     private TextView tvStoryContent;
     private Toolbar toolbar;
     private DrawerLayout drawerLayout;
     private String storyId;
+    private String chuongId;
     private RecyclerView rvChapters;
     private ListChapterAdapter chapterAdapter;
     private final List<Chuong> chapterList = new ArrayList<>();
-    private Truyen currentTruyen; // Lưu thông tin truyện hiện tại
-    private boolean isFirstChapterLoaded = false; // Cờ để chỉ tải chương đầu một lần
+    private Truyen currentTruyen;
 
+    private AppDatabase db;
+    private ChuongDao chuongDao;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             storyId = getArguments().getString(KEY_STORY_ID);
+            chuongId = getArguments().getString(KEY_CHUONG_ID);
+            Log.d(TAG, "Received storyId: " + storyId + ", chuongId: " + chuongId);
+        } else {
+            Log.e(TAG, "No arguments received!");
         }
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_reading, container, false);
+        View view = inflater.inflate(R.layout.fragment_reading, container, false);
+        tvStoryContent = view.findViewById(R.id.tv_noi_dung); // Ánh xạ TextView
+
+        db = Room.databaseBuilder(requireContext(), AppDatabase.class, "app-database")
+                .allowMainThreadQueries() // Chỉ dùng tạm thời
+                .fallbackToDestructiveMigration()
+                .build();
+        chuongDao = db.chuongDao();
+
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ánh xạ views
         drawerLayout = view.findViewById(R.id.drawer_layout);
         tvStoryContent = view.findViewById(R.id.tv_story_content);
         toolbar = view.findViewById(R.id.toolbar);
         rvChapters = view.findViewById(R.id.rv_chapters);
 
-        // Cài đặt
         setupRecyclerView();
         setupEventListeners(view);
 
-        // Tải dữ liệu
         if (storyId != null) {
-            loadStoryInfo(storyId); // Tải thông tin truyện
-            loadChapterList(storyId); // Tải danh sách chương
+            loadStoryInfo(storyId);
+            loadChapterList(storyId);
+        } else {
+            Log.e(TAG, "storyId is null, cannot load data!");
+            tvStoryContent.setText("Lỗi: Không tìm thấy truyện!");
+        }
+        // Ưu tiên tải nội dung từ chuongId, nếu không có thì tải chương đầu tiên sau khi danh sách sẵn sàng
+        if (chuongId != null) {
+            loadChapterContentById(chuongId);
+        } else if (storyId != null) {
+            // Chờ danh sách chương tải xong, sau đó tải chương đầu tiên
+            loadFirstChapterIfAvailable();
+        } else {
+            Log.e(TAG, "chuongId and storyId are null, cannot load content!");
+            tvStoryContent.setText("Lỗi: Không đủ dữ liệu để tải nội dung!");
         }
     }
 
     private void setupRecyclerView() {
         rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
-        // Khởi tạo Adapter với danh sách rỗng, và thêm listener để xử lý click
-//        chapterAdapter = new ListChapterAdapter(chapterList, chapter -> {
-//            loadChapterContent(chapter); // Khi click vào một chương, tải nội dung của nó
-//            drawerLayout.closeDrawer(GravityCompat.END); // Đóng drawer
-//        });
-
         chapterAdapter = new ListChapterAdapter(chapterList, new ListChapterAdapter.OnChapterClickListener() {
             @Override
             public void onChapterClick(Chuong chapter) {
@@ -98,12 +122,18 @@ public class ReadingFragment extends Fragment {
                 drawerLayout.closeDrawer(GravityCompat.END);
             }
         });
-
         rvChapters.setAdapter(chapterAdapter);
     }
 
     private void setupEventListeners(View view) {
-        toolbar.setNavigationOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        toolbar.setNavigationOnClickListener(v -> {
+            getParentFragmentManager().popBackStack();
+            BottomNavigationView bottomNavigation = requireActivity().findViewById(R.id.bottom_navigation);
+            if (bottomNavigation != null) {
+                bottomNavigation.setVisibility(View.VISIBLE);
+            }
+        });
+
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.action_report_error) {
                 new ReportErrorDialogFragment().show(getParentFragmentManager(), "ReportErrorDialog");
@@ -116,13 +146,9 @@ public class ReadingFragment extends Fragment {
             new SettingsBottomSheetFragment().show(getParentFragmentManager(), "SettingsBottomSheet");
         });
 
-        // Sự kiện click cho nút Floating Action Button (Text-to-Speech)
         view.findViewById(R.id.fab_tts).setOnClickListener(v -> {
-            // Lấy nội dung văn bản hiện tại từ TextView
             String currentText = tvStoryContent.getText().toString();
-
             if (currentText != null && !currentText.isEmpty()) {
-                // Khởi tạo và hiển thị Bottom Sheet, truyền nội dung vào
                 TtsBottomSheetFragment ttsBottomSheet = TtsBottomSheetFragment.newInstance(currentText);
                 ttsBottomSheet.show(getParentFragmentManager(), ttsBottomSheet.getTag());
             } else {
@@ -131,9 +157,6 @@ public class ReadingFragment extends Fragment {
         });
     }
 
-    /**
-     * Chỉ tải thông tin của truyện (tên, tác giả,...) để hiển thị trên toolbar
-     */
     private void loadStoryInfo(String storyId) {
         DatabaseReference storyRef = FirebaseDatabase.getInstance().getReference("truyen").child(storyId);
         storyRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -141,7 +164,9 @@ public class ReadingFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 currentTruyen = snapshot.getValue(Truyen.class);
                 if (currentTruyen != null) {
-                    toolbar.setSubtitle(currentTruyen.getTen()); // Set tên truyện làm subtitle
+                    toolbar.setSubtitle(currentTruyen.getTen());
+                } else {
+                    Log.e(TAG, "Failed to load story info for storyId: " + storyId);
                 }
             }
             @Override
@@ -151,39 +176,30 @@ public class ReadingFragment extends Fragment {
         });
     }
 
-
-    /**
-     * Hàm này thực hiện tải danh sách các chương của một truyện từ Firebase.
-     * Cấu trúc trên Firebase được truy vấn là: chuong -> storyId -> [danh sách chương]
-     * @param storyId ID của truyện cần tải chương (vd: "truyen_01").
-     */
     private void loadChapterList(String storyId) {
-        // SỬA ĐỔI: Thay đổi đường dẫn để trỏ đến node "chuong" theo cấu trúc của bạn
         DatabaseReference chaptersRef = FirebaseDatabase.getInstance()
-                .getReference("chuong") // Trỏ tới node gốc "chuong"
-                .child(storyId);       // Rồi đến ID của truyện (vd: "truyen_01")
+                .getReference("chuong")
+                .child(storyId);
 
         chaptersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                chapterList.clear(); // Xóa danh sách cũ
+                chapterList.clear();
                 for (DataSnapshot chapterSnapshot : dataSnapshot.getChildren()) {
                     Chuong chuong = chapterSnapshot.getValue(Chuong.class);
                     if (chuong != null) {
+                        chuong.setId(chapterSnapshot.getKey());
                         chapterList.add(chuong);
                     }
                 }
-                // (Tùy chọn) Sắp xếp chương theo ID hoặc tên nếu cần
-                // Collections.sort(chapterList, (c1, c2) -> c1.getId().compareTo(c2.getId()));
-
-                chapterAdapter.notifyDataSetChanged(); // Cập nhật RecyclerView
-
-                // Tự động tải nội dung của chương đầu tiên nếu chưa tải
-                if (!isFirstChapterLoaded && !chapterList.isEmpty()) {
-                    loadChapterContent(chapterList.get(0)); // Lấy chương đầu tiên trong danh sách
-                    isFirstChapterLoaded = true;
-                }
-                Log.i(TAG, "Loaded " + chapterList.size() + " chapters.");
+                Collections.sort(chapterList, (c1, c2) -> {
+                    int num1 = extractChapterNumber(c1.getTen());
+                    int num2 = extractChapterNumber(c2.getTen());
+                    return Integer.compare(num1, num2);
+                });
+                chapterAdapter.notifyDataSetChanged();
+                // Sau khi danh sách sẵn sàng, kiểm tra và tải chương đầu tiên nếu cần
+                loadFirstChapterIfAvailable();
             }
 
             @Override
@@ -193,21 +209,122 @@ public class ReadingFragment extends Fragment {
         });
     }
 
-    /**
-     * Tải và hiển thị nội dung của một chương cụ thể
-     * @param chapter Đối tượng Chuong cần hiển thị
-     */
+    private int extractChapterNumber(String chapterName) {
+        try {
+            String[] parts = chapterName.split(" ");
+            if (parts.length > 1) {
+                return Integer.parseInt(parts[1].replace(":", ""));
+            }
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "Error parsing chapter number from: " + chapterName, e);
+        }
+        return 0;
+    }
+
+    private void loadChapterContentById(String chuongId) {
+        if (chuongId == null || storyId == null) {
+            Log.e(TAG, "chuongId or storyId is null: storyId=" + storyId + ", chuongId=" + chuongId);
+            return;
+        }
+
+        new Thread(() -> {
+            String downloadedId = storyId + "_" + chuongId;
+            DownloadedChuong downloadedChuong = chuongDao.getChuong(downloadedId);
+            if (downloadedChuong != null) {
+                requireActivity().runOnUiThread(() -> {
+                    tvStoryContent.setText(downloadedChuong.noiDung.replace("\\n", "\n"));
+                    toolbar.setTitle(getChapterTitle(chuongId));
+                    scrollToTop();
+                });
+            } else {
+                DatabaseReference chuongRef = FirebaseDatabase.getInstance().getReference()
+                        .child("chuong").child(storyId).child(chuongId);
+                chuongRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String noiDung = snapshot.child("noiDung").getValue(String.class);
+                        if (noiDung != null) {
+                            requireActivity().runOnUiThread(() -> {
+                                tvStoryContent.setText(noiDung.replace("\\n", "\n"));
+                                toolbar.setTitle(getChapterTitle(chuongId));
+                                scrollToTop();
+                            });
+                        } else {
+                            requireActivity().runOnUiThread(() -> {
+                                tvStoryContent.setText("Không thể tải nội dung! (Dữ liệu null)");
+                                Log.e(TAG, "Nội dung null cho chapter: " + storyId + " --- " + chuongId);
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        requireActivity().runOnUiThread(() -> tvStoryContent.setText("Không thể tải nội dung."));
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private String getChapterTitle(String chuongId) {
+        for (Chuong chuong : chapterList) {
+            if (chuong.getId().equals(chuongId)) {
+                return chuong.getTen();
+            }
+        }
+        return "Chương " + chuongId; // Giá trị mặc định
+    }
+
     private void loadChapterContent(Chuong chapter) {
         if (chapter == null) return;
 
-        // Hiển thị nội dung
-        // Sử dụng replace để thay thế "\n" trong database thành ký tự xuống dòng thật
-        tvStoryContent.setText(chapter.getNoiDung().replace("\\n", "\n"));
+        new Thread(() -> {
+            String downloadedId = storyId + "_" + chapter.getId();
+            DownloadedChuong downloadedChuong = chuongDao.getChuong(downloadedId);
+            if (downloadedChuong != null) {
+                requireActivity().runOnUiThread(() -> {
+                    tvStoryContent.setText(downloadedChuong.noiDung.replace("\\n", "\n"));
+                    toolbar.setTitle(chapter.getTen());
+                    scrollToTop();
+                });
+            } else {
+                DatabaseReference chuongRef = FirebaseDatabase.getInstance().getReference()
+                        .child("chuong").child(storyId).child(chapter.getId());
+                chuongRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String noiDung = snapshot.child("noiDung").getValue(String.class);
+                        if (noiDung != null) {
+                            tvStoryContent.setText(noiDung.replace("\\n", "\n"));
+                            toolbar.setTitle(chapter.getTen());
+                            scrollToTop();
+                        } else {
+                            tvStoryContent.setText("Không thể tải nội dung! (Dữ liệu null)");
+                            Log.e(TAG, "Nội dung null cho chapter: " + storyId + " --- " + chapter.getId());
+                        }
+                    }
 
-        // Cập nhật tiêu đề trên Toolbar
-        toolbar.setTitle(chapter.getTen());
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        requireActivity().runOnUiThread(() -> tvStoryContent.setText("Không thể tải nội dung."));
+                    }
+                });
+            }
+        }).start();
+    }
 
-        // Cuộn lên đầu trang mỗi khi chuyển chương
+    private void loadFirstChapterIfAvailable() {
+        if (chuongId == null && !chapterList.isEmpty()) {
+            Chuong firstChapter = chapterList.get(0);
+            if (firstChapter != null) {
+                chuongId = firstChapter.getId(); // Gán tạm chuongId để sử dụng
+                loadChapterContent(firstChapter);
+                Log.d(TAG, "Loaded first chapter: " + firstChapter.getId());
+            }
+        }
+    }
+
+    private void scrollToTop() {
         View nestedScrollView = getView().findViewById(R.id.nested_scroll_view_reading);
         if (nestedScrollView != null) {
             nestedScrollView.scrollTo(0, 0);

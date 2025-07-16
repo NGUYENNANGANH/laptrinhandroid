@@ -37,13 +37,13 @@
         android:id="@+id/btn_download_chapter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="14dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Tải chương này"
         android:minWidth="48dp"
         android:minHeight="48dp"
         android:src="@android:drawable/stat_sys_download"
-        app:tint="@android:color/darker_gray"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:contentDescription="Tải chương này" />
+        app:tint="@android:color/darker_gray" />
 
 </RelativeLayout>

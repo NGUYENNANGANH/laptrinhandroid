@@ -79,6 +79,7 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.6.0")
     // Thêm thư viện Gson để xử lý JSON, rất cần cho code GeminiHelper
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.room.runtime.android)
 
 
     // Testing
@@ -87,4 +88,12 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation("com.google.firebase:firebase-firestore")
 
+    implementation ("androidx.navigation:navigation-fragment:2.9.0")
+    implementation ("androidx.navigation:navigation-ui:2.9.0")
+
+    implementation ("androidx.room:room-runtime:2.6.1")
+    annotationProcessor ("androidx.room:room-compiler:2.6.1")
+
+    implementation ("androidx.room:room-runtime:2.6.1")
+    annotationProcessor ("androidx.room:room-compiler:2.6.1")
 }

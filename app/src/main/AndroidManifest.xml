@@ -15,7 +15,16 @@
         android:theme="@style/Theme.Truyenchu"
         tools:targetApi="31">
         <activity
+            android:name=".activity.ManageDownloadedActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.SignupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SignupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.ChangePasswordActivity"
             android:exported="false" />
         <activity
             android:name=".activity.ChangePasswordActivity"
@@ -24,10 +33,22 @@
             android:name=".activity.ForgotPasswordActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.SigninActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.SigninActivity"
             android:exported="false" />
         <activity
             android:name=".activity.EditProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.EditProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.DonateActivity"
             android:exported="false" />
         <activity
             android:name=".activity.DonateActivity"
@@ -40,24 +61,6 @@
             android:exported="false" />
         <activity
             android:name=".activity.ChiTietTruyenActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.DonateActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.EditProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.ChangePasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.ForgotPasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SigninActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.SignupActivity"
             android:exported="false" />
         <!--
          THAY ĐỔI QUAN TRỌNG:

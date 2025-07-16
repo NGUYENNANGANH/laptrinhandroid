@@ -1,9 +1,11 @@
 package com.example.truyenchu.activity;
 
-import android.content.Intent; // THÊM MỚI
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText; // Import EditText
+import android.widget.ImageButton; // Import ImageButton
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,7 +21,7 @@ import com.bumptech.glide.Glide;
 import com.example.truyenchu.R;
 import com.example.truyenchu.adapter.BinhLuanAdapter;
 import com.example.truyenchu.adapter.ChuongAdapter;
-import com.example.truyenchu.fragment.ReadingFragment; // THÊM MỚI
+import com.example.truyenchu.fragment.ReadingFragment;
 import com.example.truyenchu.model.BinhLuan;
 import com.example.truyenchu.model.Chuong;
 import com.example.truyenchu.model.Truyen;
@@ -31,7 +33,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,10 +52,12 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
     private DatabaseReference database;
 
     private Button btnFollow;
-    private Button btnRead; // THÊM MỚI
+    private Button btnRead;
     private FirebaseAuth mAuth;
     private boolean isTruyenInLibrary = false;
 
+    private EditText etCommentInput; // Added
+    private ImageButton btnSendComment; // Added
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +76,7 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
         setupToolbar();
         setupRecyclerViews();
         loadAllData();
+        setupCommentSection(); // Added
     }
 
     private void setupToolbar() {
@@ -91,13 +98,30 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
         rvChuong = findViewById(R.id.rv_chuong);
         rvBinhLuan = findViewById(R.id.rv_binh_luan);
         btnFollow = findViewById(R.id.btn_follow);
-        btnRead = findViewById(R.id.btn_read); // THÊM MỚI
+        btnRead = findViewById(R.id.btn_read);
+        etCommentInput = findViewById(R.id.et_comment_input); // Added
+        btnSendComment = findViewById(R.id.btn_send_comment); // Added
     }
 
     private void setupRecyclerViews() {
         rvChuong.setLayoutManager(new LinearLayoutManager(this));
         rvChuong.setNestedScrollingEnabled(false);
         chuongAdapter = new ChuongAdapter(this, chuongList);
+        chuongAdapter.setTruyenId(truyenId);
+        // Thêm listener để xử lý click vào chương
+        chuongAdapter.setOnChapterClickListener(chapter -> {
+            ReadingFragment readingFragment = new ReadingFragment();
+
+            Bundle bundle = new Bundle();
+            bundle.putString(ReadingFragment.KEY_STORY_ID, truyenId);
+            bundle.putString(ReadingFragment.KEY_CHUONG_ID, chapter.getId());
+            readingFragment.setArguments(bundle);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, readingFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
         rvChuong.setAdapter(chuongAdapter);
 
         rvBinhLuan.setLayoutManager(new LinearLayoutManager(this));
@@ -111,37 +135,40 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
         loadChuongList();
         loadBinhLuanList();
         setupFollowButton();
-        setupReadButton(); // THÊM MỚI
+        setupReadButton();
     }
 
-
-    // =================================================================
-    // =========== CẬP NHẬT LOGIC NÚT ĐỌC TRUYỆN =======================
-    // =================================================================
-
     private void setupReadButton() {
-        btnRead.setOnClickListener(v -> {
-            // 1. Tạo một instance của ReadingFragment
-            ReadingFragment readingFragment = new ReadingFragment();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            btnRead.setText("Đăng nhập để đọc");
+            btnRead.setEnabled(false);
+            return;
+        }
 
-            // 2. Tạo Bundle để truyền truyenId sang
+        DatabaseReference libraryRef = database.child("user_library")
+                .child(currentUser.getUid())
+                .child("reading")
+                .child(truyenId);
+
+        btnRead.setOnClickListener(v -> {
+            libraryRef.setValue(true).addOnSuccessListener(aVoid ->
+                    Toast.makeText(ChiTietTruyenActivity.this, "Đã thêm vào danh sách đang đọc", Toast.LENGTH_SHORT).show()
+            ).addOnFailureListener(e ->
+                    Toast.makeText(ChiTietTruyenActivity.this, "Lỗi khi thêm vào danh sách đang đọc", Toast.LENGTH_SHORT).show()
+            );
+
+            ReadingFragment readingFragment = new ReadingFragment();
             Bundle bundle = new Bundle();
             bundle.putString(ReadingFragment.KEY_STORY_ID, truyenId);
             readingFragment.setArguments(bundle);
 
-            // 3. Thực hiện việc thay thế toàn bộ giao diện của Activity bằng Fragment
             getSupportFragmentManager().beginTransaction()
-                    // android.R.id.content là ID của layout gốc chứa toàn bộ giao diện của Activity
                     .replace(android.R.id.content, readingFragment)
-                    // RẤT QUAN TRỌNG: Thêm giao dịch này vào back stack
-                    // để khi người dùng nhấn nút Back, nó sẽ quay lại màn hình chi tiết
                     .addToBackStack(null)
                     .commit();
         });
     }
-
-
-    // ... Các phương thức load data và xử lý nút follow không thay đổi ...
 
     private void loadTruyenInfo() {
         database.child("truyen").child(truyenId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -169,7 +196,11 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 chuongList.clear();
                 for (DataSnapshot chuongSnapshot : snapshot.getChildren()) {
-                    chuongList.add(chuongSnapshot.getValue(Chuong.class));
+                    Chuong chuong = chuongSnapshot.getValue(Chuong.class);
+                    if (chuong != null) {
+                        chuong.setId(chuongSnapshot.getKey()); // Gán id từ key
+                        chuongList.add(chuong);
+                    }
                 }
                 chuongAdapter.notifyDataSetChanged();
             }
@@ -178,18 +209,24 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
     }
 
     private void loadBinhLuanList() {
-        database.child("binh_luan").child(truyenId).addListenerForSingleValueEvent(new ValueEventListener() {
+        // Use addValueEventListener to listen for real-time updates to comments
+        database.child("binh_luan").child(truyenId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 binhLuanList.clear();
                 for (DataSnapshot blSnapshot : snapshot.getChildren()) {
-                    binhLuanList.add(blSnapshot.getValue(BinhLuan.class));
+                    BinhLuan binhLuan = blSnapshot.getValue(BinhLuan.class);
+                    if (binhLuan != null) {
+                        binhLuanList.add(binhLuan);
+                    }
                 }
                 binhLuanAdapter.notifyDataSetChanged();
+                rvBinhLuan.scrollToPosition(binhLuanList.size() - 1); // Scroll to the latest comment
             }
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
+
     private void setupFollowButton() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
@@ -199,7 +236,10 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
         }
 
         btnFollow.setEnabled(true);
-        DatabaseReference libraryRef = database.child("user_library").child(currentUser.getUid()).child(truyenId);
+        DatabaseReference libraryRef = database.child("user_library")
+                .child(currentUser.getUid())
+                .child("followed")
+                .child(truyenId);
 
         libraryRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -226,8 +266,9 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
             btnFollow.setBackgroundColor(ContextCompat.getColor(this, R.color.green));
         }
     }
+
     private void toggleFollowStatus(String userId) {
-        DatabaseReference libraryRef = database.child("user_library").child(userId).child(truyenId);
+        DatabaseReference libraryRef = database.child("user_library").child(userId).child("followed").child(truyenId);
 
         if (isTruyenInLibrary) {
             libraryRef.removeValue().addOnSuccessListener(aVoid ->
@@ -238,5 +279,57 @@ public class ChiTietTruyenActivity extends AppCompatActivity {
                     Toast.makeText(this, "Đã theo dõi", Toast.LENGTH_SHORT).show()
             );
         }
+    }
+
+    // New method to set up comment sending
+    private void setupCommentSection() {
+        btnSendComment.setOnClickListener(v -> {
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(ChiTietTruyenActivity.this, "Vui lòng đăng nhập để bình luận.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String commentText = etCommentInput.getText().toString().trim();
+            if (commentText.isEmpty()) {
+                Toast.makeText(ChiTietTruyenActivity.this, "Bình luận không được để trống.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Generate a unique ID for the comment
+            String commentId = database.child("binh_luan").child(truyenId).push().getKey();
+            if (commentId == null) {
+                Toast.makeText(ChiTietTruyenActivity.this, "Không thể tạo ID bình luận.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Get current user's display name and a dummy avatar URL (you'll need to replace this)
+            String userName = currentUser.getDisplayName();
+            if (userName == null || userName.isEmpty()) {
+                userName = "Người dùng ẩn danh"; // Fallback if display name is not set
+            }
+            String userAvatarUrl = ""; // Replace with actual user avatar URL if you have one
+
+            // Get current timestamp
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            String currentTime = sdf.format(new Date());
+
+            BinhLuan newComment = new BinhLuan();
+            newComment.setId(commentId);
+            newComment.setTenNguoiDung(userName);
+            newComment.setAvatarUrl(userAvatarUrl);
+            newComment.setNoiDung(commentText);
+            newComment.setThoiGian(currentTime);
+            newComment.setSoLike(0); // Initialize likes to 0
+
+            database.child("binh_luan").child(truyenId).child(commentId).setValue(newComment)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(ChiTietTruyenActivity.this, "Bình luận đã được gửi.", Toast.LENGTH_SHORT).show();
+                        etCommentInput.setText(""); // Clear the input field
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(ChiTietTruyenActivity.this, "Lỗi khi gửi bình luận: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        });
     }
 }

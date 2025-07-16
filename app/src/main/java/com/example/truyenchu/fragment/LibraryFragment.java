@@ -19,8 +19,11 @@ import com.example.truyenchu.R;
 import com.example.truyenchu.activity.ChiTietTruyenActivity;
 import com.example.truyenchu.activity.SigninActivity;
 import com.example.truyenchu.adapter.LibraryAdapter;
+import com.example.truyenchu.model.Chuong;
 import com.example.truyenchu.model.Truyen;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -39,7 +42,8 @@ public class LibraryFragment extends Fragment {
     private MaterialButton btnLogin;
     private RecyclerView recyclerView;
     private LibraryAdapter adapter;
-    private List<Truyen> truyenList;
+    private List<Object> itemList;
+    private Chip chipFollowed, chipReading, chipDownloaded;
 
     private FirebaseAuth mAuth;
     private DatabaseReference dbRef;
@@ -58,49 +62,88 @@ public class LibraryFragment extends Fragment {
         loggedOutLayout = view.findViewById(R.id.logged_out_layout);
         btnLogin = view.findViewById(R.id.btn_login_from_library);
         recyclerView = view.findViewById(R.id.library_recycler_view);
+        chipFollowed = view.findViewById(R.id.chip_followed);
+        chipReading = view.findViewById(R.id.chip_reading);
+        chipDownloaded = view.findViewById(R.id.chip_downloaded);
 
         mAuth = FirebaseAuth.getInstance();
         dbRef = FirebaseDatabase.getInstance().getReference();
 
         // Setup RecyclerView
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        truyenList = new ArrayList<>();
-        adapter = new LibraryAdapter(getContext(), truyenList);
+        itemList = new ArrayList<>();
+        adapter = new LibraryAdapter(getContext(), itemList, "followed");
         recyclerView.setAdapter(adapter);
 
-        // << THÊM DÒNG NÀY ĐỂ ĐĂNG KÝ LISTENER
-        adapter.setOnItemClickListener(this::onItemClick);
+        chipFollowed.setOnClickListener(v -> loadLibraryData(mAuth.getUid(), "followed"));
+        chipReading.setOnClickListener(v -> loadLibraryData(mAuth.getUid(), "reading"));
+        chipDownloaded.setOnClickListener(v -> loadLibraryData(mAuth.getUid(), "downloaded"));
 
+        // Đăng ký listener
+        adapter.setOnItemClickListener(this::onItemClick);
     }
 
-    private void onItemClick(Truyen truyen) {
-        // Kiểm tra để tránh lỗi
-        if (truyen == null || truyen.getId() == null) {
-            Toast.makeText(getContext(), "Không thể mở truyện này", Toast.LENGTH_SHORT).show();
+    private void onItemClick(Object item) {
+        if (item == null) {
+            Toast.makeText(getContext(), "Không thể mở nội dung này", Toast.LENGTH_SHORT).show();
             return;
         }
-        // Tạo Intent để chuyển sang ChiTietTruyenActivity
-        Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
-        // Gửi ID của truyện được click
-        intent.putExtra("TRUYEN_ID", truyen.getId());
-        startActivity(intent);
+
+        if (item instanceof Truyen) {
+            Truyen truyen = (Truyen) item;
+            String truyenId = truyen.getId();
+            if (truyenId != null) {
+                Intent intent = new Intent(getActivity(), ChiTietTruyenActivity.class);
+                intent.putExtra("TRUYEN_ID", truyenId);
+                startActivity(intent);
+            } else {
+                Toast.makeText(getContext(), "Không thể mở nội dung này", Toast.LENGTH_SHORT).show();
+            }
+        } else if (item instanceof Chuong) {
+            Chuong chuong = (Chuong) item;
+            String truyenId = chuong.getTruyenId();
+            String chuongId = chuong.getId();
+            if (truyenId != null && chuongId != null) {
+                ReadingFragment readingFragment = new ReadingFragment();
+
+                Bundle bundle = new Bundle();
+                bundle.putString(ReadingFragment.KEY_STORY_ID, truyenId);
+                bundle.putString(ReadingFragment.KEY_CHUONG_ID, chuongId);
+                readingFragment.setArguments(bundle);
+                // Thay thế trong container của MainActivity
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, readingFragment)
+                        .addToBackStack(null)
+                        .commit();
+                // Ẩn BottomNavigationView
+                BottomNavigationView bottomNavigation = getActivity().findViewById(R.id.bottom_navigation);
+                if (bottomNavigation != null) {
+                    bottomNavigation.setVisibility(View.GONE);
+                }
+            } else {
+                Toast.makeText(getContext(), "Không thể mở nội dung này", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         checkUserStatus();
+        // Khôi phục BottomNavigationView nếu quay lại
+        BottomNavigationView bottomNavigation = getActivity().findViewById(R.id.bottom_navigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setVisibility(View.VISIBLE);
+        }
     }
 
     private void checkUserStatus() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            // User is logged in
             loggedOutLayout.setVisibility(View.GONE);
             libraryContentLayout.setVisibility(View.VISIBLE);
-            loadLibraryData(currentUser.getUid());
+            loadLibraryData(currentUser.getUid(), "followed");
         } else {
-            // User is not logged in
             loggedOutLayout.setVisibility(View.VISIBLE);
             libraryContentLayout.setVisibility(View.GONE);
 
@@ -112,37 +155,47 @@ public class LibraryFragment extends Fragment {
         }
     }
 
-    private void loadLibraryData(String userId) {
-        // Assume you have a node like /user_library/{userId}/{truyenId}
-        DatabaseReference libraryRef = dbRef.child("user_library").child(userId);
+    private void loadLibraryData(String userId, String category) {
+        DatabaseReference libraryRef = dbRef.child("user_library").child(userId).child(category);
+
         libraryRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                truyenList.clear();
+                itemList.clear();
                 if (!snapshot.exists()) {
                     Toast.makeText(getContext(), "Tủ sách của bạn trống", Toast.LENGTH_SHORT).show();
                     adapter.notifyDataSetChanged();
                     return;
                 }
 
-                for (DataSnapshot truyenIdSnapshot : snapshot.getChildren()) {
-                    String truyenId = truyenIdSnapshot.getKey();
-                    if (truyenId != null) {
-                        // Fetch details for each story from the "truyen" node
-                        dbRef.child("truyen").child(truyenId).addListenerForSingleValueEvent(new ValueEventListener() {
+                for (DataSnapshot itemIdSnapshot : snapshot.getChildren()) {
+                    String itemId = itemIdSnapshot.getKey();
+                    if (itemId != null) {
+                        String table = category.equals("downloaded") ? "chuong" : "truyen";
+                        dbRef.child(table).child(itemId).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
-                            public void onDataChange(@NonNull DataSnapshot truyenSnapshot) {
-                                Truyen truyen = truyenSnapshot.getValue(Truyen.class);
-                                if (truyen != null) {
-                                    truyen.setId(truyenSnapshot.getKey());
-                                    truyenList.add(truyen);
-                                    adapter.notifyDataSetChanged();
+                            public void onDataChange(@NonNull DataSnapshot itemSnapshot) {
+                                if (category.equals("downloaded")) {
+                                    for (DataSnapshot childSnapshot : itemSnapshot.getChildren()) {
+                                        Chuong chuong = childSnapshot.getValue(Chuong.class);
+                                        if (chuong != null) {
+                                            chuong.setId(childSnapshot.getKey()); // Gán id
+                                            itemList.add(chuong);
+                                        }
+                                    }
+                                } else {
+                                    Truyen truyen = itemSnapshot.getValue(Truyen.class);
+                                    if (truyen != null) {
+                                        truyen.setId(itemSnapshot.getKey()); // Gán id
+                                        itemList.add(truyen);
+                                    }
                                 }
+                                adapter.notifyDataSetChanged();
                             }
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
-                                Toast.makeText(getContext(), "Failed to load story details.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), "Failed to load item details.", Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -154,5 +207,19 @@ public class LibraryFragment extends Fragment {
                 Toast.makeText(getContext(), "Failed to load library.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void hideBottomNavigation() {
+        BottomNavigationView bottomNavigation = getActivity().findViewById(R.id.bottom_navigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setVisibility(View.GONE);
+        }
+    }
+
+    private void showBottomNavigation() {
+        BottomNavigationView bottomNavigation = getActivity().findViewById(R.id.bottom_navigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setVisibility(View.VISIBLE);
+        }
     }
 }

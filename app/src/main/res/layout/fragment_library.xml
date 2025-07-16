@@ -7,13 +7,12 @@
     android:background="@color/screen_background"
     tools:context=".fragment.LibraryFragment">
 
-    <!-- Giao diện chính của Tủ sách (khi đã đăng nhập) -->
     <LinearLayout
         android:id="@+id/library_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:visibility="gone"
+        android:visibility="visible"
         tools:visibility="visible">
 
         <TextView
@@ -36,19 +35,12 @@
             app:singleLine="true">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_all"
+                android:id="@+id/chip_followed"
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All"
+                android:text="Followed"
                 android:checked="true"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_unread"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Unread"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_reading"
